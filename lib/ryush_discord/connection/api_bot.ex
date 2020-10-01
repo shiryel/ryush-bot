@@ -85,7 +85,22 @@ defmodule RyushDiscord.Connection.ApiBot do
     end
   end
 
+  @doc """
+  Create a message on a channel
+  """
+  @spec create_message(binary(), any, binary()) :: :ok
   def create_message(channel_id, body, bot_token) do
-    post("/channels/#{channel_id}/messages", body, headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}])
+    case Jason.encode(body) do
+      {:ok, body} ->
+        post("/channels/#{channel_id}/messages", body,
+          headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
+        )
+        |> inspect()
+        |> Logger.debug()
+
+      {:error, _} ->
+        Logger.error("Invalid body #{inspect(body)}")
+    end
+    :ok
   end
 end

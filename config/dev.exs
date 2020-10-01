@@ -1,10 +1,12 @@
 use Mix.Config
 
 config :ryush,
-bot_token: System.get_env("BOT_TOKEN") || 
-  raise """
-  environment variable BOT_TOKEN is missing
-  """
+  bot_token:
+    System.get_env("BOT_TOKEN") ||
+      raise("""
+      environment variable BOT_TOKEN is missing
+      """),
+  bot_user_id: "758235547151237132"
 
 # Configure your database
 config :ryush, Ryush.Repo,
@@ -53,7 +55,7 @@ config :ryush, RyushWeb.Endpoint,
 # different ports.
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n"
+config :logger, :console, format: {Utils.ConsoleLogger, :format}, metadata: :all
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.

@@ -1,57 +1,57 @@
 defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
   @moduledoc """
-  Get messages and send then to their respective guild_id server
+  Get messages and send then to their respective `RyushDiscord.Guild`
   """
-  alias RyushDiscord.Connection.ApiBot
+  alias RyushDiscord.{Guild}
+
   require Logger
 
+  defp is_mentioning_me?(mentions) when is_list(mentions) do
+    Enum.any?(mentions, fn
+      %{"username" => "Ryush"} -> true
+      _ -> false
+    end)
+  end
+
+  defp is_myself?(user_id, state) do
+    user_id == state.bot_user_id
+  end
+
+  defp get_nick_or_username(%{"member" => %{
+    "nick" => nick
+  }}), do: nick
+
+  defp get_nick_or_username(%{"author" => %{
+    "username" => username
+  }}), do: username
+
+  @doc """
+  Process created messages
+  """
   def message_create(
         %{
-          "attachments" => [],
           "author" => %{
-            "avatar" => _avatar,
-            "discriminator" => _discriminator,
-            "id" => _author_id,
-            "public_flags" => _public_flags,
-            "username" => username
+            "id" => user_id,
           },
           "channel_id" => channel_id,
-          "content" => _content,
-          "edited_timestamp" => _edited_timestamp,
-          "embeds" => _embeds,
-          "flags" => _flags,
-          "guild_id" => _guilds_id,
-          "id" => _id,
-          "member" => %{
-            "deaf" => _deaf,
-            "hoisted_role" => _hoisted_role,
-            "joined_at" => _joined_at,
-            "mute" => _mute,
-            "roles" => _roles
-          },
-          "mention_everyone" => _mention_everyone?,
-          "mention_roles" => _mention_rules,
-          "mentions" => _mentions,
-          "nonce" => _nonce,
-          "pinned" => _pinned?,
-          "referenced_message" => _referenced_message,
-          "timestamp" => _timestamp,
-          "tts" => _tts?,
-          "type" => _type
-        },
+          "content" => content,
+          "guild_id" => guild_id,
+          "mentions" => mentions,
+        } = msg,
         state
       ) do
-    content =
-      %{
-        content: "Hello, #{username}"
-      }
-      |> Jason.encode!()
 
-    ApiBot.create_message(channel_id, content, state.bot_token)
-    |> IO.inspect()
-
-    Process.sleep(20000)
-    {:ok, state}
+    %Guild{
+      bot_token: state.bot_token,
+      is_myself?: is_myself?(user_id, state),
+      mentions_me?: is_mentioning_me?(mentions),
+      message: content,
+      username: get_nick_or_username(msg),
+      user_id: user_id,
+      channel_id: channel_id,
+      guild_id: guild_id
+    }
+    |> Guild.process()
   end
 
   def message_create(msg, _state) do

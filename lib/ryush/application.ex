@@ -8,19 +8,26 @@ defmodule Ryush.Application do
   alias RyushDiscord.Connection.GatewayBot
 
   def start(_type, _args) do
+    bot_token = Application.get_env(:ryush, :bot_token)
+    bot_user_id = Application.get_env(:ryush, :bot_user_id)
+
     children = [
       # Start the Ecto repository
-      #Ryush.Repo,
+      Ryush.Repo,
       # Start the Telemetry supervisor
       RyushWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: Ryush.PubSub},
       # Start the Endpoint (http/https)
       RyushWeb.Endpoint,
-      # Start a worker by calling: Ryush.Worker.start_link(arg)
-      # {Ryush.Worker, arg}
-
-      {GatewayBot, bot_token: Application.get_env(:ryush, :bot_token)}
+      # Start the Guild Registry and DynamicSupervisor
+      RyushDiscord.Guild.GuildRegistry,
+      RyushDiscord.Guild.GuildSupervisor,
+      # Start the Talk Registry and DynamicSupervisor
+      RyushDiscord.Guild.Talk.TalkRegistry,
+      RyushDiscord.Guild.Talk.TalkSupervisor,
+      # Start the Bot Gateway (uses the `RyushDiscord.Guild...`)
+      {GatewayBot, bot_token: bot_token, bot_user_id: bot_user_id}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -72,6 +72,7 @@ defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
       ) do
     Logger.info("Attempting to reconnect... (request from server)")
 
+    # Need to reconnect, but WebSockex dont suport it...
     {:close, {4009, "Session timed out"}, state}
   end
 
@@ -122,6 +123,7 @@ defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
     if state.heartbeat_sent_without_response > 3 do
       # restart connection because maybe its a zombied or failed connection
 
+      # Need to reconnect, but WebSockex dont suport it...
       {:close, {4009, "Session timed out"}, state}
     else
       {:ok, %{state | heartbeat_sent_without_response: 0}}

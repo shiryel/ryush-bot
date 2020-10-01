@@ -7,6 +7,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
   """
 
   defstruct bot_token: "",
+            bot_user_id: "",
             session_started?: false,
             session_id: "",
             heartbeat_sent_without_response: 0,
@@ -21,10 +22,10 @@ defmodule RyushDiscord.Connection.GatewayBot do
 
   @gateway_params "/?v=6&encoding=json"
 
-  def start_link(bot_token: bot_token) do
+  def start_link(bot_token: bot_token, bot_user_id: bot_user_id) do
     case RyushDiscord.Connection.ApiBot.gateway_bot(bot_token) do
       {:ok, %{url: url}} ->
-        state = %__MODULE__{bot_token: bot_token}
+        state = %__MODULE__{bot_token: bot_token, bot_user_id: bot_user_id}
         WebSockex.start_link(url <> @gateway_params, __MODULE__, state)
 
       {:error, {:rate_limit, rate_limit}} ->
@@ -128,7 +129,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
 
   @impl true
   def handle_cast({:send, {type, msg} = frame}, state) do
-    IO.puts("Sending #{type} frame with payload: #{msg}")
+    Logger.debug("Sending #{type} frame with payload: #{msg}")
     {:reply, frame, state}
   end
 
@@ -144,7 +145,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
         MessageWorkflow.message_create(msg, state)
 
       other ->
-        IO.inspect(other)
+        Logger.debug(other)
     end
   end
 end
