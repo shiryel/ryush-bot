@@ -14,7 +14,7 @@ defmodule RyushDiscord.Guild.Talk do
   alias RyushDiscord.Guild
   alias __MODULE__.{TalkRegistry, TalkServer, TalkSupervisor}
 
-  @type about :: :continue_talk | :start
+  @type about :: :continue_talk | :start | :e621
 
   @doc """
   Get the server name
@@ -30,7 +30,7 @@ defmodule RyushDiscord.Guild.Talk do
   See if the talk exists on registry
   """
   @spec talk_exists?(%Guild{}) :: true | false
-  def talk_exists?(%Guild{} = guild) do
+  def talk_exists?(guild) do
     case Registry.lookup(TalkRegistry, {guild.channel_id, guild.user_id}) do
       [] ->
         false

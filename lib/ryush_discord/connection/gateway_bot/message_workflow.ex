@@ -17,13 +17,19 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
     user_id == state.bot_user_id
   end
 
-  defp get_nick_or_username(%{"member" => %{
-    "nick" => nick
-  }}), do: nick
+  defp get_nick_or_username(%{
+         "member" => %{
+           "nick" => nick
+         }
+       }),
+       do: nick
 
-  defp get_nick_or_username(%{"author" => %{
-    "username" => username
-  }}), do: username
+  defp get_nick_or_username(%{
+         "author" => %{
+           "username" => username
+         }
+       }),
+       do: username
 
   @doc """
   Process created messages
@@ -31,12 +37,12 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
   def message_create(
         %{
           "author" => %{
-            "id" => user_id,
+            "id" => user_id
           },
           "channel_id" => channel_id,
           "content" => content,
           "guild_id" => guild_id,
-          "mentions" => mentions,
+          "mentions" => mentions
         } = msg,
         state
       ) do
@@ -55,6 +61,6 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
   end
 
   def message_create(msg, _state) do
-    Logger.warn("[MESSAGE_CREATE] not handled: #{inspect msg}")
+    Logger.warn("[MESSAGE_CREATE] not handled: #{inspect(msg)}")
   end
 end

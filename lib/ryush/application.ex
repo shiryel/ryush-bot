@@ -26,6 +26,9 @@ defmodule Ryush.Application do
       # Start the Talk Registry and DynamicSupervisor
       RyushDiscord.Guild.Talk.TalkRegistry,
       RyushDiscord.Guild.Talk.TalkSupervisor,
+      # Start the Flow Registry and DynamicSupervisor
+      RyushDiscord.Guild.Flow.FlowRegistry,
+      RyushDiscord.Guild.Flow.FlowSupervisor,
       # Start the Bot Gateway (uses the `RyushDiscord.Guild...`)
       {GatewayBot, bot_token: bot_token, bot_user_id: bot_user_id}
     ]

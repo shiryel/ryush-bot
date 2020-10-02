@@ -95,12 +95,36 @@ defmodule RyushDiscord.Connection.ApiBot do
         post("/channels/#{channel_id}/messages", body,
           headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
         )
-        |> inspect()
-        |> Logger.debug()
+
+      # |> inspect()
+      # |> Logger.debug()
 
       {:error, _} ->
         Logger.error("Invalid body #{inspect(body)}")
     end
+
     :ok
+  end
+
+  def get_owner_id(guild) do
+    case get("/guilds/#{guild.guild_id}",
+           headers: [
+             {"authorization", "Bot #{guild.bot_token}"},
+             {"content-type", "application/json"}
+           ]
+         ) do
+      {:ok,
+       %Tesla.Env{
+         __client__: %Tesla.Client{adapter: nil, fun: nil, post: [], pre: []},
+         __module__: RyushDiscord.Connection.ApiBot,
+         body: %{
+           "owner_id" => owner_id
+         }
+       }} ->
+        {:ok, owner_id}
+
+      {:error, error} ->
+        {:error, error}
+    end
   end
 end

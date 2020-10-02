@@ -6,13 +6,12 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
   defstruct talking_about: nil,
             step: 0
 
-  use GenServer
+  use GenServer, restart: :transient
 
   require Logger
 
   alias RyushDiscord.Guild
-  alias Guild.Talk
-  alias Talk.Flows
+  alias Guild.{Talk, Flow}
 
   # Used by the `RyushDiscord.Talk.DynamicSupervisor` with Guilds
   def start_link(guild: guild, about: about) do
@@ -27,6 +26,7 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
 
   @impl true
   def init(state) do
+    Logger.debug("Starting new talk\n state: #{inspect state}")
     {:ok, state}
   end
 
@@ -39,6 +39,11 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
     process(about, guild, guild_state, state)
   end
 
+  @impl true
+  def terminate(reason, state) do
+    Logger.debug("Terminating Talk\n Reason: #{inspect reason}\n State: #{inspect(state)} ")
+  end
+
   ###########
   # PROCESS #
   ###########
@@ -46,7 +51,9 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
   defp process(about, guild, guild_state, state) do
     case about do
       :start ->
-        Flows.Start.run(guild, guild_state, state)
+        Flow.Start.run(guild, guild_state, state)
+      :e621 ->
+        Flow.E621.run(guild, guild_state, state)
       not_handled ->
         Logger.error("Talk flow not handled: #{not_handled}")
     end
