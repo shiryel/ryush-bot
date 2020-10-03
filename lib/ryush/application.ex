@@ -13,7 +13,7 @@ defmodule Ryush.Application do
 
     children = [
       # Start the Ecto repository
-      Ryush.Repo,
+      #Ryush.Repo,
       # Start the Telemetry supervisor
       RyushWeb.Telemetry,
       # Start the PubSub system

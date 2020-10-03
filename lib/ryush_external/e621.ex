@@ -9,7 +9,7 @@ defmodule RyushExternal.E621 do
   @doc """
   Get a random post of E6 using the tags especified
   """
-  @spec get_random_post_url([bitstring()], maybe_improper_list(atom(), any())) ::
+  @spec get_random_post_url([bitstring()], [{atom(), any()}]) ::
           {:ok, bitstring()} | {:error, :tags_not_found} | {:error, any}
   def get_random_post_url(tags, options \\ []) when is_list(tags) do
     tags =

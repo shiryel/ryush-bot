@@ -20,8 +20,8 @@ defmodule RyushDiscord.Guild.Flow do
   See if the flow exists on registry
   """
   @spec flow_exists?(any, %Guild{}) :: true | false
-  def flow_exists?(flow_name, guild) do
-    case Registry.lookup(FlowRegistry, {flow_name, guild.user_id}) do
+  def flow_exists?(flow_module, guild) do
+    case Registry.lookup(FlowRegistry, {flow_module, guild.channel_id}) do
       [] ->
         false
 
@@ -38,8 +38,7 @@ defmodule RyushDiscord.Guild.Flow do
     DynamicSupervisor.start_child(FlowSupervisor, server)
   end
 
-  def send_cast(flow_module, guild, info) do
-    server = get_server_name(flow_module, guild)
-    GenServer.cast(server, info)
+  def stop_server(flow_module, guild) do
+    GenServer.stop(get_server_name(flow_module, guild), :normal)
   end
 end

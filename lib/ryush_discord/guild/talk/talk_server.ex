@@ -4,7 +4,8 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
   """
   @enforce_keys ~w|talking_about|a
   defstruct talking_about: nil,
-            step: 0
+            step: 0,
+            cache: []
 
   use GenServer, restart: :transient
 
@@ -26,7 +27,7 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
 
   @impl true
   def init(state) do
-    Logger.debug("Starting new talk\n state: #{inspect state}")
+    Logger.debug("Starting new talk\n state: #{inspect(state)}")
     {:ok, state}
   end
 
@@ -41,7 +42,7 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
 
   @impl true
   def terminate(reason, state) do
-    Logger.debug("Terminating Talk\n Reason: #{inspect reason}\n State: #{inspect(state)} ")
+    Logger.debug("Terminating Talk\n Reason: #{inspect(reason)}\n State: #{inspect(state)} ")
   end
 
   ###########
@@ -52,8 +53,10 @@ defmodule RyushDiscord.Guild.Talk.TalkServer do
     case about do
       :start ->
         Flow.Start.run(guild, guild_state, state)
+
       :e621 ->
         Flow.E621.run(guild, guild_state, state)
+
       not_handled ->
         Logger.error("Talk flow not handled: #{not_handled}")
     end
