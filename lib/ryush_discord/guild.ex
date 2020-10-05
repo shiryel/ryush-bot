@@ -33,38 +33,6 @@ defmodule RyushDiscord.Guild do
   require Logger
 
   alias __MODULE__.{GuildRegistry, GuildServer, GuildSupervisor}
-  alias RyushDiscord.Connection.ApiBot
-
-  @doc """
-  Get the server name
-
-  Used to create and find the guild servers through the `RyushDiscord.Guild.GuildRegistry`
-  """
-  @spec get_server_name(t()) :: {:via, Registry, {GuildRegistry, String.t}}
-  def get_server_name(guild) do
-    {:via, Registry, {GuildRegistry, guild.guild_id}}
-  end
-
-  @doc """
-  See if the guild exists on `RyushDiscord.Guild.GuildRegistry`
-  """
-  @spec guild_exists?(t()) :: boolean()
-  def guild_exists?(guild) do
-    case Registry.lookup(GuildRegistry, guild.guild_id) do
-      [] ->
-        false
-      _ ->
-        true
-    end
-  end
-
-  @doc """
-  Starts a new `RyushDiscord.Guild.GenServer`
-  """
-  @spec start_new_guild(t()) :: DynamicSupervisor.on_start_child()
-  def start_new_guild(guild) do
-    DynamicSupervisor.start_child(GuildSupervisor, {GuildServer, guild: guild})
-  end
 
   @doc """
   Process a `RyushDiscord.Guild.t()`
@@ -73,35 +41,14 @@ defmodule RyushDiscord.Guild do
   """
   @spec process(t()) :: :ok
   def process(guild) do
-    if guild_exists?(guild) do
-      GenServer.cast(get_server_name(guild), {:process, guild})
+    server_name = GuildServer.get_server_name(guild)
+
+    if GuildRegistry.exists?(guild) do
+      GenServer.cast(server_name, {:process, guild})
     else
-      Logger.info("starting new guild #{guild.guild_id}")
-      start_new_guild(guild)
-      GenServer.cast(get_server_name(guild), {:process, guild})
+      Logger.info("starting new guild #{guild.guild_id}...")
+      GuildSupervisor.start_new(guild)
+      GenServer.cast(server_name, {:process, guild})
     end
-  end
-
-  @doc """
-  Send text in the channel
-  """
-  @spec say_text(binary(), t()) :: :ok
-  def say_text(text, guild) do
-    body =
-      %{
-        content: text
-      }
-
-    ApiBot.create_message(guild.channel_id, body, guild.bot_token)
-  end
-
-  @doc """
-  Updates the current message handler that the bot in the guilds uses to get commands
-
-  WARNING: This function when used outside the `RyushDiscord.Guild.GuildServer` process can lead to race-conditions, use this with caution
-  """
-  @spec update_guild_state(t(), GuildServer.t) :: :ok
-  def update_guild_state(guild, guild_state) do
-    GenServer.cast(get_server_name(guild), {:update_guild_state, guild_state})
   end
 end

@@ -11,18 +11,26 @@ defmodule RyushDiscord.Guild.GuildServer do
             admin_channel: nil,
             owner_id: nil
 
-  @type t :: %__MODULE__{message_handler: binary(), admin_channel: binary()}
+  @type t :: %__MODULE__{message_handler: binary(), admin_channel: binary(), owner_id: binary()}
 
-  use GenServer, restart: :transient
+  alias RyushDiscord.{Guild, Talk, Connection}
+  alias Guild.{GuildRegistry}
 
   require Logger
 
-  alias RyushDiscord.Connection.ApiBot
-  alias RyushDiscord.Guild
-  alias Guild.Talk
+  use GenServer, restart: :transient
 
   def start_link(guild: guild) do
-    GenServer.start_link(__MODULE__, %__MODULE__{}, name: Guild.get_server_name(guild))
+    GenServer.start_link(__MODULE__, %__MODULE__{}, name: get_server_name(guild))
+  end
+
+  @doc """
+  Get the server name
+
+  Used to create and find the guild servers through the `RyushDiscord.Guild.GuildRegistry`
+  """
+  def get_server_name(guild) do
+    {:via, Registry, {GuildRegistry, guild.guild_id}}
   end
 
   #############
@@ -31,15 +39,11 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   @impl true
   def init(state) do
-    Logger.debug("Starting new guild\n state: #{inspect state}")
+    Logger.debug("Starting new guild\n state: #{inspect(state)}")
     {:ok, state}
   end
 
   @impl true
-  def handle_cast({:update_guild_state, new_state}, _state) do
-    {:noreply, new_state}
-  end
-
   def handle_cast({:process, guild}, state) do
     pre_process(guild, state)
   end
@@ -61,7 +65,7 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   # Get external info
   defp pre_process(guild, %{owner_id: nil} = state) do
-    case ApiBot.get_owner_id(guild) do
+    case Connection.get_owner_id(guild) do
       {:ok, owner_id} ->
         Logger.debug("Guild get owner_id")
         pre_process(guild, %{state | owner_id: owner_id})
@@ -125,7 +129,7 @@ defmodule RyushDiscord.Guild.GuildServer do
     else
       Logger.debug("Guild: any mention found")
 
-      Guild.say_text(
+      Connection.say(
         """
         ```CSS
         *BEEP BOOP*
@@ -145,32 +149,36 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   # MESSAGE HANDLER NEEDED
   defp owner_process(guild, %{message_handler: nil} = state) do
-    unless Talk.process(guild, state, :continue_talk) do
-      Logger.debug("Guild: :continue_talk not found and message handler needed")
+    case Talk.process(guild, state, :continue_talk) do
+      {:error, :talk_not_found} ->
+        Logger.debug("Guild: :continue_talk not found and message handler needed")
 
-      Guild.say_text(
-        """
-        ```CSS
-        *BEEP BOOP*
-        ```
-        Hello #{guild.username}, My name is Ryush and I need your assistence...
-        Lets say that... well...
+        Connection.say(
+          """
+          ```CSS
+          *BEEP BOOP*
+          ```
+          Hello #{guild.username}, My name is Ryush and I need your assistence...
+          Lets say that... well...
 
-        Just mention me again with the start command, like this:
-        `@Ryush start`
-        """,
-        guild
-      )
+          Just mention me again with the start command, like this:
+          `@Ryush start`
+          """,
+          guild
+        )
+
+        {:noreply, state}
+
+      {:ok, state} ->
+        {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   # SET ADMIN CHANNEL HERE
   defp owner_process(%{message: "admin_channel_here"} = guild, state) do
     Logger.debug("Guild: set admin_channel_here")
 
-    Guild.say_text(
+    Connection.say(
       """
       ```CSS
       [Admin Channel seted]
@@ -186,7 +194,8 @@ defmodule RyushDiscord.Guild.GuildServer do
   # ADMIN CHANNEL NEEDED
   defp owner_process(guild, %{admin_channel: nil} = state) do
     Logger.debug("Guild: admin_channel not found")
-    Guild.say_text(
+
+    Connection.say(
       """
       Please, use the `#{state.message_handler}admin_channel_here` to define a admin channel for the bot!
       """,
@@ -224,9 +233,14 @@ defmodule RyushDiscord.Guild.GuildServer do
   #################
   defp admin_process(%{message: "e621"} = guild, state) do
     Logger.debug("Guild: starting Talk :e621")
-    Talk.process(guild, state, :e621)
 
-    {:noreply, state}
+    case Talk.process(guild, state, :e621) do
+      {:ok, state} ->
+        {:noreply, state}
+
+      {:error, _} ->
+        {:noreply, state}
+    end
   end
 
   defp admin_process(guild, state) do

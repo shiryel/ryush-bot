@@ -1,4 +1,7 @@
 defmodule RyushExternal.E621 do
+  @moduledoc """
+  Functions to get the E621 API
+  """
   use Tesla
 
   plug Tesla.Middleware.BaseUrl, "https://e621.net/"
@@ -9,9 +12,9 @@ defmodule RyushExternal.E621 do
   @doc """
   Get a random post of E6 using the tags especified
   """
-  @spec get_random_post_url([bitstring()], [{atom(), any()}]) ::
-          {:ok, bitstring()} | {:error, :tags_not_found} | {:error, any}
-  def get_random_post_url(tags, options \\ []) when is_list(tags) do
+  @spec get_random_post_urls([bitstring()], [{atom(), any()}]) ::
+          {:ok, [%{url: bitstring(), id: bitstring()}]} | {:error, :tags_not_found} | {:error, any}
+  def get_random_post_urls(tags, options \\ []) when is_list(tags) do
     tags =
       tags
       |> Enum.filter(fn x -> String.match?(x, ~r/[[:alnum:]]+/) end)
@@ -19,26 +22,46 @@ defmodule RyushExternal.E621 do
 
     %{score_min: score_min, rating: rating} = Enum.into(options, @default)
 
-    url = "posts.json?tags=#{tags}+-flash+score:>=#{score_min}+rating:#{rating}+order:random&limit=1"
-          |> URI.encode()
+    url =
+      "posts.json?tags=#{tags}+-flash+score:>=#{score_min}+rating:#{rating}+order:random&limit=50"
+      |> URI.encode()
 
     case get(url) do
       {:ok,
        %Tesla.Env{
          body: %{
-           "posts" => [
-             %{
-               "file" => %{
-                 "url" => url
-               }
-             }
-           ]
+           "posts" => posts
          }
        }} ->
-        {:ok, url}
+        results =
+          posts
+          |> Enum.filter(fn
+            %{
+              "file" => %{
+                "url" => nil
+              }
+            } ->
+              false
 
-      {:ok, %Tesla.Env{body: %{"posts" => []}}} ->
-        {:error, :tags_not_found}
+            %{
+              "file" => %{
+                "url" => _url
+              },
+              "id" => _id
+            } ->
+              true
+          end)
+          |> Enum.map(fn
+            %{
+              "file" => %{
+                "url" => url
+              },
+              "id" => id
+            } ->
+              %{url: url, id: id}
+          end)
+
+        {:ok, results}
 
       {_, error} ->
         {:error, error}

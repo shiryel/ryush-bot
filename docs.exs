@@ -20,9 +20,12 @@
       RyushDiscord.Guild.GuildServer,
       RyushDiscord.Guild.GuildRegistry,
       RyushDiscord.Guild.GuildSupervisor,
-      RyushDiscord.Guild.Talk.TalkServer,
-      RyushDiscord.Guild.Talk.TalkRegistry,
-      RyushDiscord.Guild.Talk.TalkSupervisor
+      RyushDiscord.Talk.TalkServer,
+      RyushDiscord.Talk.TalkRegistry,
+      RyushDiscord.Talk.TalkSupervisor,
+      RyushDiscord.Flow.FlowServer,
+      RyushDiscord.Flow.FlowRegistry,
+      RyushDiscord.Flow.FlowSupervisor
     ],
     Database: [
       Ryush.Repo,

@@ -1,8 +1,11 @@
-defmodule RyushDiscord.Guild.Flow.Start do
-  alias RyushDiscord.Guild
+defmodule RyushDiscord.Flow.Start do
+  @moduledoc """
+  Start workflow, gets the handler
+  """
+  alias RyushDiscord.Connection
 
-  def run(guild, _guild_state, %{step: 0} = state) do
-    Guild.say_text(
+  def run(guild, guild_state, %{step: 0} = state) do
+    Connection.say(
       """
       ```CSS
       [Keyword Configuration]
@@ -22,11 +25,11 @@ defmodule RyushDiscord.Guild.Flow.Start do
       guild
     )
 
-    {:noreply, %{state | step: 1}}
+    {:reply, guild_state, %{state | step: 1}}
   end
 
   def run(%{message: message} = guild, guild_state, %{step: 1} = state) do
-    Guild.say_text(
+    Connection.say(
       """
       Nice, now when calling me you need to do like:
       `#{message}about`
@@ -43,7 +46,6 @@ defmodule RyushDiscord.Guild.Flow.Start do
       guild
     )
 
-    Guild.update_guild_state(guild, %{guild_state | message_handler: message})
-    {:stop, :normal, state}
+    {:stop, :normal, %{guild_state | message_handler: message}, state}
   end
 end

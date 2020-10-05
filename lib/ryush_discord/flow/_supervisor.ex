@@ -1,4 +1,4 @@
-defmodule RyushDiscord.Guild.GuildSupervisor do
+defmodule RyushDiscord.Flow.FlowSupervisor do
   @moduledoc false
 
   use DynamicSupervisor
@@ -10,5 +10,13 @@ defmodule RyushDiscord.Guild.GuildSupervisor do
   @impl true
   def init(_init_arg) do
     DynamicSupervisor.init(strategy: :one_for_one)
+  end
+
+  @doc """
+  Starts a new flow server
+  """
+  @spec start_new(any) :: DynamicSupervisor.on_start_child()
+  def start_new(server) do
+    DynamicSupervisor.start_child(__MODULE__, server)
   end
 end

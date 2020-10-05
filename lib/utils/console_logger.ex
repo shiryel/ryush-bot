@@ -1,4 +1,7 @@
 defmodule Utils.ConsoleLogger do
+  @moduledoc """
+  A custom console logger
+  """
   def format(level, message, _timestamp, metadata) do
     case level do
       :debug ->
