@@ -3,6 +3,8 @@
 
 Ryush is a discord bot under construction
 
+<img src="ryush.png" alt="Ryush profile pic" height="400">
+
 ## How to test
 
 With elixir and the phoenix framework installed:
