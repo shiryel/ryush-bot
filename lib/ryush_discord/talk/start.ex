@@ -1,4 +1,4 @@
-defmodule RyushDiscord.Flow.Start do
+defmodule RyushDiscord.Talk.Start do
   @moduledoc """
   Start workflow, gets the handler
   """
@@ -26,10 +26,10 @@ defmodule RyushDiscord.Flow.Start do
       guild
     )
 
-    {:end, guild_state, talk_state}
+    {:start_end, guild_state, talk_state}
   end
 
-  paw :end, guild, guild_state, talk_state do
+  paw :start_end, guild, guild_state, talk_state do
     Connection.say(
       """
       Nice, now when calling me you need to do like:
@@ -47,6 +47,6 @@ defmodule RyushDiscord.Flow.Start do
       guild
     )
 
-    {:stop, %{guild_state | message_handler: guild.message}, talk_state}
+    {:end, %{guild_state | message_handler: guild.message}, talk_state}
   end
 end

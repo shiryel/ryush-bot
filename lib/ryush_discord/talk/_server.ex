@@ -7,11 +7,13 @@ defmodule RyushDiscord.Talk.TalkServer do
             step: :start,
             cache: []
 
+  @type t :: %__MODULE__{talking_about: atom(), step: atom(), cache: []}
+
   use GenServer, restart: :transient
 
   require Logger
 
-  alias RyushDiscord.{Flow, Talk}
+  alias RyushDiscord.Talk
   alias Talk.TalkRegistry
 
   # Used by the `RyushDiscord.Talk.DynamicSupervisor` with Guilds
@@ -52,23 +54,13 @@ defmodule RyushDiscord.Talk.TalkServer do
   defp process(about, guild, guild_state, state) do
     case about do
       :start ->
-        apply(Flow.Start, String.to_atom("_paw_" <> Atom.to_string(state.step) <> "_"), [guild, guild_state, state])
-        |> abstraction()
+        Talk.Start.paw_run(state.step, guild, guild_state, state)
 
       :e621 ->
-        apply(Flow.E621, String.to_atom("_paw_" <> Atom.to_string(state.step) <> "_"), [guild, guild_state, state])
-        |> abstraction()
+        Talk.E621.paw_run(state.step, guild, guild_state, state)
 
       not_handled ->
         Logger.error("Talk flow not handled: #{not_handled}")
     end
-  end
-
-  defp abstraction({:stop, guild_state, state}) do
-    {:stop, :normal, guild_state, state}
-  end
-
-  defp abstraction({next_step, guild_state, state}) do
-    {:reply, guild_state, %{state | step: next_step}}
   end
 end

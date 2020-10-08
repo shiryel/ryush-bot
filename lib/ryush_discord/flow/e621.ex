@@ -2,6 +2,7 @@ defmodule RyushDiscord.Flow.E621 do
   @moduledoc """
   Connects your channel to the E621 API, getting a image each `:timer` minutes
   """
+
   defstruct last_guild: nil,
             timer: 30,
             score_min: 50,
@@ -10,29 +11,23 @@ defmodule RyushDiscord.Flow.E621 do
             show_sauce?: false,
             e621_cache: []
 
-  use GenServer, restart: :transient
+  alias RyushDiscord.{Guild, Connection}
+  alias RyushE621
+
+  @type t :: %__MODULE__{
+          last_guild: Guild.t(),
+          timer: integer(),
+          score_min: integer,
+          rating: String.t(),
+          tags: [String.t()],
+          show_sauce?: boolean(),
+          e621_cache: [term()]
+        }
+
+  use RyushDiscord.Flow.FlowBehaviour
 
   require Logger
 
-  alias RyushE621
-  alias RyushDiscord.{Flow, Talk, Connection}
-  alias Flow.{FlowRegistry, FlowSupervisor}
-
-  use Talk.TalkBehaviour
-
-  # Used by the `RyushDiscord.Talk.DynamicSupervisor` with Guilds
-  def start_link(options) do
-    state = __struct__(options)
-    GenServer.start_link(__MODULE__, state, name: get_server_name(state.last_guild))
-  end
-
-  def stop_server(guild) do
-    GenServer.stop(get_server_name(guild), :normal)
-  end
-
-  defp get_server_name(guild) do
-    {:via, Registry, {FlowRegistry, {__MODULE__, guild.channel_id}}}
-  end
 
   defp random_color do
     Enum.random(String.to_integer("eb9494", 16)..String.to_integer("a094eb", 16))
@@ -63,8 +58,13 @@ defmodule RyushDiscord.Flow.E621 do
   end
 
   #############
-  # GENSERVER #
+  # BEHAVIOUR #
   #############
+
+  @impl true
+  def start_link(struct: struct) do
+    GenServer.start_link(__MODULE__, struct, name: get_server_name(struct.last_guild))
+  end
 
   @impl true
   def init(state) do
@@ -118,146 +118,5 @@ defmodule RyushDiscord.Flow.E621 do
   @impl true
   def terminate(reason, state) do
     Logger.debug("Terminating Flow E621\n Reason: #{inspect(reason)}\n State: #{inspect(state)} ")
-  end
-
-  #############
-  # TALK PAWS #
-  #############
-
-  paw :start, guild, guild_state, talk_state do
-    if FlowRegistry.exists?(__MODULE__, guild) do
-      Connection.say("E621 disabled!", guild)
-      stop_server(guild)
-
-      {:stop, guild_state, talk_state}
-    else
-      Connection.say(
-        """
-        Please set the rating
-        `safe` `questionable` `explicit`
-        """,
-        guild
-      )
-
-      {:rating, guild_state, talk_state}
-    end
-  end
-
-  paw :rating, %{message: message} = guild, guild_state, talk_state,
-    when: message in ["safe", "questionable", "explicit"] do
-    Connection.say(
-      """
-      Now, please set the tags that you want to be send to this server, eg: 
-      `paws fox female -human -comic`
-
-      Note: extreme tags needs `login` and a `api_key` of your account, that feature is not implemented yet on this bot
-      """,
-      guild
-    )
-
-    {:tags, guild_state, %{talk_state | cache: [rating: message]}}
-  end
-
-  paw :rating, guild, guild_state, talk_state do
-    Connection.say(
-      """
-      Please set the rating
-      `safe` `questionable` `explicit`
-      """,
-      guild
-    )
-
-    {:rating, guild_state, talk_state}
-  end
-
-  paw :tags, guild, guild_state, talk_state do
-    tags =
-      guild.message
-      |> String.split()
-
-    Connection.say(
-      """
-        Please set the minimum score for the posts, eg:
-        `100` for a good image :smirk:
-      """,
-      guild
-    )
-
-    {:min_score, guild_state, %{talk_state | cache: [tags: tags] ++ talk_state.cache}}
-  end
-
-  paw :min_score, guild, guild_state, talk_state do
-    score_min =
-      guild.message
-      |> String.to_integer()
-
-    Connection.say(
-      """
-      Plese define the time in minutes for my to keep sending the images, eg:
-      `60` for 1 image each hour
-      """,
-      guild
-    )
-
-    {:time, guild_state, %{talk_state | cache: [score_min: score_min] ++ talk_state.cache}}
-  end
-
-  paw :time, guild, guild_state, talk_state do
-    timer =
-      case guild.message
-           |> String.to_integer() do
-        x when x < 1 ->
-          1
-
-        x ->
-          x
-      end
-
-    Connection.say(
-      """
-      Do you want the sauce?
-      `yes` `no`
-      """,
-      guild
-    )
-
-    {:sauce, guild_state, %{talk_state | step: 5, cache: [timer: timer] ++ talk_state.cache}}
-  end
-
-  paw :sauce, %{message: message} = guild, guild_state, talk_state, 
-    when: message in ["yes", "no"] do
-    show_sauce? =
-      case message do
-        "yes" ->
-          true
-
-        "no" ->
-          false
-      end
-
-    FlowSupervisor.start_new(
-      {__MODULE__, [last_guild: guild, show_sauce?: show_sauce?] ++ talk_state.cache}
-    )
-
-    Connection.say(
-      """
-      Finished :eyes:
-      """,
-      guild
-    )
-
-    {:stop, guild_state, talk_state}
-  end
-
-  paw :sauce, guild, guild_state, talk_state do
-    Connection.say(
-      """
-      Do you want the sauce?
-      `yes` `no`
-      """,
-      guild
-    )
-
-    {:sauce, guild_state, talk_state}
   end
 end
