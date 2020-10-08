@@ -4,7 +4,7 @@ defmodule RyushDiscord.Talk.TalkServer do
   """
   @enforce_keys ~w|talking_about|a
   defstruct talking_about: nil,
-            step: 0,
+            step: :start,
             cache: []
 
   use GenServer, restart: :transient
@@ -52,13 +52,23 @@ defmodule RyushDiscord.Talk.TalkServer do
   defp process(about, guild, guild_state, state) do
     case about do
       :start ->
-        Flow.Start.run(guild, guild_state, state)
+        apply(Flow.Start, String.to_atom("_paw_" <> Atom.to_string(state.step) <> "_"), [guild, guild_state, state])
+        |> abstraction()
 
       :e621 ->
-        Flow.E621.run(guild, guild_state, state)
+        apply(Flow.E621, String.to_atom("_paw_" <> Atom.to_string(state.step) <> "_"), [guild, guild_state, state])
+        |> abstraction()
 
       not_handled ->
         Logger.error("Talk flow not handled: #{not_handled}")
     end
+  end
+
+  defp abstraction({:stop, guild_state, state}) do
+    {:stop, :normal, guild_state, state}
+  end
+
+  defp abstraction({next_step, guild_state, state}) do
+    {:reply, guild_state, %{state | step: next_step}}
   end
 end

@@ -15,8 +15,10 @@ defmodule RyushDiscord.Flow.E621 do
   require Logger
 
   alias RyushE621
-  alias RyushDiscord.{Flow, Connection}
+  alias RyushDiscord.{Flow, Talk, Connection}
   alias Flow.{FlowRegistry, FlowSupervisor}
+
+  use Talk.TalkBehaviour
 
   # Used by the `RyushDiscord.Talk.DynamicSupervisor` with Guilds
   def start_link(options) do
@@ -118,16 +120,16 @@ defmodule RyushDiscord.Flow.E621 do
     Logger.debug("Terminating Flow E621\n Reason: #{inspect(reason)}\n State: #{inspect(state)} ")
   end
 
-  #######
-  # RUN #
-  #######
+  #############
+  # TALK PAWS #
+  #############
 
-  def run(guild, guild_state, %{step: 0} = state) do
+  paw :start, guild, guild_state, talk_state do
     if FlowRegistry.exists?(__MODULE__, guild) do
       Connection.say("E621 disabled!", guild)
       stop_server(guild)
 
-      {:stop, :normal, guild_state, state}
+      {:stop, guild_state, talk_state}
     else
       Connection.say(
         """
@@ -137,12 +139,12 @@ defmodule RyushDiscord.Flow.E621 do
         guild
       )
 
-      {:reply, guild_state, %{state | step: 1}}
+      {:rating, guild_state, talk_state}
     end
   end
 
-  def run(%{message: message} = guild, guild_state, %{step: 1} = state)
-      when message in ["safe", "questionable", "explicit"] do
+  paw :rating, %{message: message} = guild, guild_state, talk_state,
+    when: message in ["safe", "questionable", "explicit"] do
     Connection.say(
       """
       Now, please set the tags that you want to be send to this server, eg: 
@@ -153,10 +155,10 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:reply, guild_state, %{state | step: 2, cache: [rating: message]}}
+    {:tags, guild_state, %{talk_state | cache: [rating: message]}}
   end
 
-  def run(guild, guild_state, %{step: 1} = state) do
+  paw :rating, guild, guild_state, talk_state do
     Connection.say(
       """
       Please set the rating
@@ -165,10 +167,10 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:reply, guild_state, state}
+    {:rating, guild_state, talk_state}
   end
 
-  def run(guild, guild_state, %{step: 2} = state) do
+  paw :tags, guild, guild_state, talk_state do
     tags =
       guild.message
       |> String.split()
@@ -181,10 +183,10 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:reply, guild_state, %{state | step: 3, cache: [tags: tags] ++ state.cache}}
+    {:min_score, guild_state, %{talk_state | cache: [tags: tags] ++ talk_state.cache}}
   end
 
-  def run(guild, guild_state, %{step: 3} = state) do
+  paw :min_score, guild, guild_state, talk_state do
     score_min =
       guild.message
       |> String.to_integer()
@@ -197,10 +199,10 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:reply, guild_state, %{state | step: 4, cache: [score_min: score_min] ++ state.cache}}
+    {:time, guild_state, %{talk_state | cache: [score_min: score_min] ++ talk_state.cache}}
   end
 
-  def run(guild, guild_state, %{step: 4} = state) do
+  paw :time, guild, guild_state, talk_state do
     timer =
       case guild.message
            |> String.to_integer() do
@@ -219,11 +221,11 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:reply, guild_state, %{state | step: 5, cache: [timer: timer] ++ state.cache}}
+    {:sauce, guild_state, %{talk_state | step: 5, cache: [timer: timer] ++ talk_state.cache}}
   end
 
-  def run(%{message: message} = guild, guild_state, %{step: 5} = state)
-      when message in ["yes", "no"] do
+  paw :sauce, %{message: message} = guild, guild_state, talk_state, 
+    when: message in ["yes", "no"] do
     show_sauce? =
       case message do
         "yes" ->
@@ -234,7 +236,7 @@ defmodule RyushDiscord.Flow.E621 do
       end
 
     FlowSupervisor.start_new(
-      {__MODULE__, [last_guild: guild, show_sauce?: show_sauce?] ++ state.cache}
+      {__MODULE__, [last_guild: guild, show_sauce?: show_sauce?] ++ talk_state.cache}
     )
 
     Connection.say(
@@ -244,10 +246,10 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:stop, :normal, guild_state, state}
+    {:stop, guild_state, talk_state}
   end
 
-  def run(guild, guild_state, %{step: 5} = state) do
+  paw :sauce, guild, guild_state, talk_state do
     Connection.say(
       """
       Do you want the sauce?
@@ -256,6 +258,6 @@ defmodule RyushDiscord.Flow.E621 do
       guild
     )
 
-    {:reply, guild_state, state}
+    {:sauce, guild_state, talk_state}
   end
 end

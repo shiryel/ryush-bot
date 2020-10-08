@@ -3,8 +3,9 @@ defmodule RyushDiscord.Flow.Start do
   Start workflow, gets the handler
   """
   alias RyushDiscord.Connection
+  use RyushDiscord.Talk.TalkBehaviour
 
-  def run(guild, guild_state, %{step: 0} = state) do
+  paw :start, guild, guild_state, talk_state do
     Connection.say(
       """
       ```CSS
@@ -25,14 +26,14 @@ defmodule RyushDiscord.Flow.Start do
       guild
     )
 
-    {:reply, guild_state, %{state | step: 1}}
+    {:end, guild_state, talk_state}
   end
 
-  def run(%{message: message} = guild, guild_state, %{step: 1} = state) do
+  paw :end, guild, guild_state, talk_state do
     Connection.say(
       """
       Nice, now when calling me you need to do like:
-      `#{message}about`
+      `#{guild.message}about`
 
       If you want another one, just run the `@Ryush start` again
 
@@ -41,11 +42,11 @@ defmodule RyushDiscord.Flow.Start do
 
       And the last config that you need to do is to define my private control channel, be aware THAT ANYBODY WHO IS ON THIS CHANNEL CAN SEND ADMIN COMANDS TO ME! with:
       ```
-      `#{message}admin_channel_here`
+      `#{guild.message}admin_channel_here`
       """,
       guild
     )
 
-    {:stop, :normal, %{guild_state | message_handler: message}, state}
+    {:stop, %{guild_state | message_handler: guild.message}, talk_state}
   end
 end
