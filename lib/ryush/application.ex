@@ -24,11 +24,11 @@ defmodule Ryush.Application do
       RyushDiscord.Guild.GuildRegistry,
       RyushDiscord.Guild.GuildSupervisor,
       # Start the Talk Registry and DynamicSupervisor
-      RyushDiscord.Talk.TalkRegistry,
-      RyushDiscord.Talk.TalkSupervisor,
+      RyushDiscord.GuildTalk.TalkRegistry,
+      RyushDiscord.GuildTalk.TalkSupervisor,
       # Start the Flow Registry and DynamicSupervisor
-      RyushDiscord.Flow.FlowRegistry,
-      RyushDiscord.Flow.FlowSupervisor,
+      RyushDiscord.GuildFlow.FlowRegistry,
+      RyushDiscord.GuildFlow.FlowSupervisor,
       # Start the Bot Gateway (uses the `RyushDiscord.Guild...`)
       {GatewayBot, bot_token: bot_token, bot_user_id: bot_user_id}
     ]

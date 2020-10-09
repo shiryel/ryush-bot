@@ -4,7 +4,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   """
 
   require Logger
-  alias RyushDiscord.{Talk, Connection}
+  alias RyushDiscord.{GuildTalk, Connection}
 
   use RyushDiscord.Guild.GuildBehaviour
 
@@ -61,7 +61,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
       end
     else
       Logger.debug("Guild: trying to continue talk")
-      Talk.process(guild, state, :continue_talk)
+      GuildTalk.process(guild, state, :continue_talk)
       {:end, state}
     end
   end
@@ -76,7 +76,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   paw :owner, :message_handler, %{mentions_me?: true} = guild, state do
     if String.contains?(guild.message, "start") do
       Logger.debug("Guild: start mention found, starting talk :start")
-      Talk.process(guild, state, :start)
+      GuildTalk.process(guild, state, :start)
     else
       Logger.debug("Guild: any mention found")
 
@@ -100,7 +100,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
 
   # MESSAGE HANDLER NEEDED
   paw :owner, :message_handler, guild, state do
-    case Talk.process(guild, state, :continue_talk) do
+    case GuildTalk.process(guild, state, :continue_talk) do
       {:error, :talk_not_found} ->
         Logger.debug("Guild: :continue_talk not found and message handler needed")
 
@@ -161,7 +161,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   # ADMIN COMANDS #
   #################
   paw :admin, :run, %{message: "e621"} = guild, state do
-    case Talk.process(guild, state, :e621) do
+    case GuildTalk.process(guild, state, :e621) do
       {:ok, state} ->
         {:end, state}
 
