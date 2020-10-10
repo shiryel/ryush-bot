@@ -1,4 +1,4 @@
-# Ryush
+# 𝘙𝘺𝘶𝘴𝘩
 [![Twitter](https://img.shields.io/twitter/follow/shiryel_.svg?style=social)](https://twitter.com/shiryel_)
 
 Ryush is a discord bot under construction
