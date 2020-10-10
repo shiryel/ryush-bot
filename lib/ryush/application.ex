@@ -31,7 +31,9 @@ defmodule Ryush.Application do
       RyushDiscord.GuildFlow.FlowRegistry,
       RyushDiscord.GuildFlow.FlowSupervisor,
       # Start the Bot Gateway (uses the `RyushDiscord.Guild...`)
-      {GatewayBot, bot_token: bot_token, bot_user_id: bot_user_id}
+      {GatewayBot, bot_token: bot_token, bot_user_id: bot_user_id},
+      # RESTARTS
+      RyushDiscord.GuildFlow.FlowRestart,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -7,6 +7,8 @@ defmodule RyushDiscord.GuildFlow.FlowBehaviour do
 
   @callback start_link(options :: term()) :: GenServer.on_start()
 
+  @callback on_restart() :: :ok
+
   defmacro __using__(_opts) do
     quote do
       @behaviour RyushDiscord.GuildFlow.FlowBehaviour
@@ -21,7 +23,7 @@ defmodule RyushDiscord.GuildFlow.FlowBehaviour do
       """
       @spec start(struct: __MODULE__.t | [any]) :: DynamicSupervisor.on_start_child
       def start(options) when is_struct(options) do
-        FlowSupervisor.start_new({__MODULE__, options})
+        FlowSupervisor.start_new({__MODULE__, struct: options})
       end
 
       def start(options) do

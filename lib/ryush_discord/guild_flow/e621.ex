@@ -13,6 +13,7 @@ defmodule RyushDiscord.GuildFlow.E621 do
 
   alias RyushDiscord.{Guild, Connection}
   alias RyushE621
+  alias :mnesia, as: Mnesia
 
   @type t :: %__MODULE__{
           last_guild: Guild.t(),
@@ -56,6 +57,15 @@ defmodule RyushDiscord.GuildFlow.E621 do
     end
   end
 
+  defp schedule_work(timer) do
+    # in minutes
+    Process.send_after(self(), :work, timer * 60 * 1000)
+  end
+
+  def schedule_update_db(channel_id, timer_mm) do
+    Process.send_after(self(), {:update_db, channel_id}, timer_mm)
+  end
+
   #############
   # BEHAVIOUR #
   #############
@@ -63,6 +73,30 @@ defmodule RyushDiscord.GuildFlow.E621 do
   @impl true
   def start_link(struct: struct) do
     GenServer.start_link(__MODULE__, struct, name: get_server_name(struct.last_guild))
+  end
+
+  @impl true
+  def on_restart do
+    Mnesia.wait_for_tables([__MODULE__], 2000)
+
+    # defaults the attributes to [key, val]
+    Mnesia.create_table(__MODULE__, [])
+
+    {:atomic, keys} = 
+      fn -> :mnesia.all_keys(__MODULE__) end |> :mnesia.transaction()
+
+    for key <- keys do
+      case fn -> Mnesia.read(__MODULE__, key) end |> Mnesia.transaction() do
+        {:atomic, [{_, _, state}]} ->
+          Logger.debug("Database found! updating...")
+
+          start(state)
+
+        _ ->
+          Logger.warn("Database not found")
+      end
+    end
+    :ok
   end
 
   @impl true
@@ -75,6 +109,7 @@ defmodule RyushDiscord.GuildFlow.E621 do
   @impl true
   def handle_info(:work, %{e621_cache: [hd | tail]} = state) do
     schedule_work(state.timer)
+    schedule_update_db(state.last_guild.channel_id, 5000)
     send_e621(hd, state)
 
     {:noreply, %{state | e621_cache: tail}}
@@ -82,6 +117,7 @@ defmodule RyushDiscord.GuildFlow.E621 do
 
   def handle_info(:work, state) do
     schedule_work(state.timer)
+    schedule_update_db(state.last_guild.channel_id, 5000)
 
     case RyushExternal.E621.get_random_post_urls(state.tags,
            rating: state.rating,
@@ -109,9 +145,17 @@ defmodule RyushDiscord.GuildFlow.E621 do
     end
   end
 
-  defp schedule_work(timer) do
-    # in minutes
-    Process.send_after(self(), :work, timer * 60 * 1000)
+  def handle_info({:update_db, channel_id}, state) do
+    fn ->
+      Mnesia.write({__MODULE__, channel_id, state})
+    end
+    |> Mnesia.transaction()
+
+    Mnesia.dump_tables([__MODULE__])
+
+    Logger.debug("Database #{__MODULE__} updated!")
+
+    {:noreply, state}
   end
 
   @impl true
