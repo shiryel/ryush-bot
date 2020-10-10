@@ -28,3 +28,5 @@ ryush-*.tar
 /priv/static/
 
 .elixir_ls
+
+/Mnesia.*

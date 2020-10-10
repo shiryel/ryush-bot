@@ -12,13 +12,30 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   alias RyushDiscord.Guild
   alias Guild.{GuildRegistry, ServerProcess}
+  alias :mnesia, as: Mnesia
 
   require Logger
 
   use GenServer, restart: :transient
 
   def start_link(guild: guild) do
-    GenServer.start_link(__MODULE__, %__MODULE__{}, name: get_server_name(guild))
+    Mnesia.wait_for_tables([__MODULE__], 2000)
+    Mnesia.create_table(__MODULE__, []) # defaults the attributes to [key, val]
+
+    state =
+      case fn -> Mnesia.read(__MODULE__, guild.guild_id) end |> Mnesia.transaction() do
+        {:atomic, [{_, _, %{message_handler: message_handler, admin_channel: admin_channel}}]} ->
+          Logger.debug("Database found! updating...")
+          %__MODULE__{}
+          |> Map.put(:message_handler, message_handler)
+          |> Map.put(:admin_channel, admin_channel)
+
+        _ ->
+          Logger.debug("Database not found")
+          %__MODULE__{}
+      end
+
+    GenServer.start_link(__MODULE__, state, name: get_server_name(guild))
   end
 
   @doc """
@@ -47,6 +64,20 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   def handle_cast(request, state) do
     Logger.error("cant handle: request |#{inspect(request)}| state |#{inspect(state)}|")
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:update_db, guild_id}, state) do
+    fn ->
+      Mnesia.write({__MODULE__, guild_id, state})
+    end
+    |> Mnesia.transaction()
+
+    Mnesia.dump_tables([__MODULE__])
+
+    Logger.debug("Database #{__MODULE__} updated!")
 
     {:noreply, state}
   end

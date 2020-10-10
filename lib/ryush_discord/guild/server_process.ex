@@ -29,7 +29,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
     {:end, state}
   end
 
-  # MESSAGE_HANDLER NEEDED (only owner can handle)
+  # Needs message_handler from owner
   paw :system, :pre_process, guild, %{message_handler: nil} = state do
     if guild.user_id == state.owner_id do
       {:owner, :message_handler, guild, state}
@@ -38,11 +38,16 @@ defmodule RyushDiscord.Guild.ServerProcess do
     end
   end
 
-  # Remove the message_handler (if exists)
-  # |> owner_process/2
-  # |> process/2
-  #
-  # Or Try to :continue_talk
+  # Is a mention
+  paw :system, :pre_process, %{mentions_me?: true} = guild, state do
+    if guild.user_id == state.owner_id do
+      {:owner, :mention, guild, state}
+    else
+      {:end, state}
+    end
+  end
+
+  # Remove the message_handler (if exists) or try to continue talk
   paw :system, :pre_process, guild, state do
     if String.match?(guild.message, ~r/^#{state.message_handler}[[:alnum:]]+/) do
       guild = %{
@@ -121,8 +126,18 @@ defmodule RyushDiscord.Guild.ServerProcess do
         {:end, state}
 
       {:ok, state} ->
+        Process.send_after(self(), {:update_db, guild.guild_id}, 5000)
         {:end, state}
     end
+  end
+
+  paw :owner, :mention, guild, state do
+    if String.contains?(guild.message, "start") do
+      Logger.debug("Guild: start mention found, starting talk :start")
+      GuildTalk.process(guild, state, :start)
+    end
+
+    {:end, state}
   end
 
   # SET ADMIN CHANNEL HERE
@@ -136,6 +151,8 @@ defmodule RyushDiscord.Guild.ServerProcess do
       """,
       guild
     )
+
+    Process.send_after(self(), {:update_db, guild.guild_id}, 5000)
 
     {:end, %{state | admin_channel: guild.channel_id}}
   end
