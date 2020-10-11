@@ -12,7 +12,7 @@ defmodule RyushDiscord.GuildTalk do
   require Logger
 
   alias RyushDiscord.Guild
-  alias __MODULE__.{TalkRegistry, TalkSupervisor}
+  alias __MODULE__.{TalkRegistry}
 
   @doc """
   Process a `RyushDiscord.Guild.t()` with they `about()`
@@ -47,7 +47,7 @@ defmodule RyushDiscord.GuildTalk do
       {:ok, response}
     else
       Logger.info("Starting new talk: #{inspect(about)}")
-      TalkSupervisor.start_new(guild, about)
+      DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__.TalkServer, guild: guild, about: about})
 
       response =
         GenServer.call(TalkRegistry.get_name(guild), {:process, about, guild, guild_state})

@@ -32,7 +32,7 @@ defmodule RyushDiscord.Guild do
 
   require Logger
 
-  alias __MODULE__.{GuildRegistry, GuildServer, GuildSupervisor}
+  alias __MODULE__.{GuildRegistry, GuildServer}
 
   @doc """
   Process a `RyushDiscord.Guild.t()`
@@ -47,7 +47,7 @@ defmodule RyushDiscord.Guild do
       GenServer.cast(server_name, {:process, guild})
     else
       Logger.info("starting new guild #{guild.guild_id}...")
-      GuildSupervisor.start_new(guild)
+      DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {GuildServer, guild: guild})
       GenServer.cast(server_name, {:process, guild})
     end
   end

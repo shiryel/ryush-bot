@@ -24,7 +24,7 @@ defmodule Ryush.MixProject do
   def application do
     [
       mod: {Ryush.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :mnesia]
     ]
   end
 

@@ -26,7 +26,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
     case RyushDiscord.Connection.ApiBot.gateway_bot(bot_token) do
       {:ok, %{url: url}} ->
         state = %__MODULE__{bot_token: bot_token, bot_user_id: bot_user_id}
-        WebSockex.start_link(url <> @gateway_params, __MODULE__, state)
+        WebSockex.start_link(url <> @gateway_params, __MODULE__, state, name: __MODULE__)
 
       {:error, {:rate_limit, rate_limit}} ->
         Logger.warn("Rate Limited!!!")

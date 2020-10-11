@@ -23,12 +23,12 @@ defmodule RyushDiscord.GuildFlow.FlowBehaviour do
       """
       @spec start(struct: __MODULE__.t | [any]) :: DynamicSupervisor.on_start_child
       def start(options) when is_struct(options) do
-        FlowSupervisor.start_new({__MODULE__, struct: options})
+        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, struct: options})
       end
 
       def start(options) do
         struct = __MODULE__.__struct__(options)
-        FlowSupervisor.start_new({__MODULE__, struct: struct})
+        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, struct: struct})
       end
 
       @doc """

@@ -21,15 +21,14 @@ defmodule Ryush.Application do
       {Phoenix.PubSub, name: Ryush.PubSub},
       # Start the Endpoint (http/https)
       RyushWeb.Endpoint,
+      # Guild Dynamic Supervisor
+      {DynamicSupervisor, name: RyushDiscord.GuildSupervisor, strategy: :one_for_one},
       # Start the Guild Registry and DynamicSupervisor
       RyushDiscord.Guild.GuildRegistry,
-      RyushDiscord.Guild.GuildSupervisor,
       # Start the Talk Registry and DynamicSupervisor
       RyushDiscord.GuildTalk.TalkRegistry,
-      RyushDiscord.GuildTalk.TalkSupervisor,
       # Start the Flow Registry and DynamicSupervisor
       RyushDiscord.GuildFlow.FlowRegistry,
-      RyushDiscord.GuildFlow.FlowSupervisor,
       # Start the Bot Gateway (uses the `RyushDiscord.Guild...`)
       {GatewayBot, bot_token: bot_token, bot_user_id: bot_user_id},
       # RESTARTS
