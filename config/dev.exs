@@ -6,7 +6,7 @@ config :ryush,
       raise("""
       environment variable BOT_TOKEN is missing
       """),
-  bot_user_id: "758235547151237132"
+  bot_user_id: System.get_env("BOT_USER_ID") || "758235547151237132"
 
 # Configure your database
 config :ryush, Ryush.Repo,
