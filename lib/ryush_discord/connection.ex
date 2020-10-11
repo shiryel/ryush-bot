@@ -9,7 +9,7 @@ defmodule RyushDiscord.Connection do
   @doc """
   Send text in the channel
   """
-  @spec say(binary(), Guild.t()) :: :ok
+  @spec say(bitstring(), Guild.t()) :: :ok
   def say(text, guild) do
     body = %{
       content: text

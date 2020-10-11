@@ -48,6 +48,6 @@ defmodule RyushDiscord.GuildTalk.Start do
       guild
     )
 
-    {:end, %{guild_state | message_handler: guild.message}, talk_state}
+    {:end, %{guild_state | command_prefix: guild.message}, talk_state}
   end
 end

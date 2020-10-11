@@ -83,7 +83,7 @@ defmodule RyushDiscord.GuildFlow.E621 do
     Mnesia.create_table(__MODULE__, [])
 
     {:atomic, keys} = 
-      fn -> :mnesia.all_keys(__MODULE__) end |> :mnesia.transaction()
+      fn -> Mnesia.all_keys(__MODULE__) end |> :mnesia.transaction()
 
     for key <- keys do
       case fn -> Mnesia.read(__MODULE__, key) end |> Mnesia.transaction() do

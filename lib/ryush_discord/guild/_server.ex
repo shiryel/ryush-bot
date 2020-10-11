@@ -4,11 +4,11 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   Uses the default behaviour `RyushDiscord.Guild.ServerProcess`
   """
-  defstruct message_handler: nil,
+  defstruct command_prefix: nil,
             admin_channel: nil,
             owner_id: nil
 
-  @type t :: %__MODULE__{message_handler: binary(), admin_channel: binary(), owner_id: binary()}
+  @type t :: %__MODULE__{command_prefix: binary(), admin_channel: binary(), owner_id: binary()}
 
   alias RyushDiscord.Guild
   alias Guild.{GuildRegistry, ServerProcess}
@@ -24,10 +24,10 @@ defmodule RyushDiscord.Guild.GuildServer do
 
     state =
       case fn -> Mnesia.read(__MODULE__, guild.guild_id) end |> Mnesia.transaction() do
-        {:atomic, [{_, _, %{message_handler: message_handler, admin_channel: admin_channel}}]} ->
+        {:atomic, [{_, _, %{command_prefix: command_prefix, admin_channel: admin_channel}}]} ->
           Logger.debug("Database found! updating...")
           %__MODULE__{}
-          |> Map.put(:message_handler, message_handler)
+          |> Map.put(:command_prefix, command_prefix)
           |> Map.put(:admin_channel, admin_channel)
 
         _ ->

@@ -29,10 +29,10 @@ defmodule RyushDiscord.Guild.ServerProcess do
     {:end, state}
   end
 
-  # Needs message_handler from owner
-  paw :system, :pre_process, guild, %{message_handler: nil} = state do
+  # Needs command_prefix from owner
+  paw :system, :pre_process, guild, %{command_prefix: nil} = state do
     if guild.user_id == state.owner_id do
-      {:owner, :message_handler, guild, state}
+      {:owner, :command_prefix, guild, state}
     else
       {:end, state}
     end
@@ -43,16 +43,16 @@ defmodule RyushDiscord.Guild.ServerProcess do
     if guild.user_id == state.owner_id do
       {:owner, :mention, guild, state}
     else
-      {:end, state}
+      {:anyone, :mention, guild, state}
     end
   end
 
-  # Remove the message_handler (if exists) or try to continue talk
+  # Remove the command_prefix (if exists) or try to continue talk
   paw :system, :pre_process, guild, state do
-    if String.match?(guild.message, ~r/^#{state.message_handler}[[:alnum:]]+/) do
+    if String.match?(guild.message, ~r/^#{state.command_prefix}[[:alnum:]]+/) do
       guild = %{
         guild
-        | message: String.replace(guild.message, state.message_handler, "", global: false)
+        | message: String.replace(guild.message, state.command_prefix, "", global: false)
       }
 
       if guild.user_id == state.owner_id do
@@ -78,7 +78,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   # Owner mention handler
   # - start (and SET MESSAGE HANDLER)
   # - [anything]
-  paw :owner, :message_handler, %{mentions_me?: true} = guild, state do
+  paw :owner, :command_prefix, %{mentions_me?: true} = guild, state do
     if String.contains?(guild.message, "start") do
       Logger.debug("Guild: start mention found, starting talk :start")
       GuildTalk.process(guild, state, :start)
@@ -104,7 +104,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   end
 
   # MESSAGE HANDLER NEEDED
-  paw :owner, :message_handler, guild, state do
+  paw :owner, :command_prefix, guild, state do
     case GuildTalk.process(guild, state, :continue_talk) do
       {:error, :talk_not_found} ->
         Logger.debug("Guild: :continue_talk not found and message handler needed")
@@ -132,9 +132,18 @@ defmodule RyushDiscord.Guild.ServerProcess do
   end
 
   paw :owner, :mention, guild, state do
-    if String.contains?(guild.message, "start") do
-      Logger.debug("Guild: start mention found, starting talk :start")
-      GuildTalk.process(guild, state, :start)
+    cond do
+      String.contains?(guild.message, "start") ->
+        GuildTalk.process(guild, state, :start)
+
+      String.contains?(guild.message, "about") ->
+        GuildTalk.process(guild, state, :about)
+
+      String.contains?(guild.message, "help") ->
+        GuildTalk.process(guild, state, :help)
+
+      true ->
+        :ok
     end
 
     {:end, state}
@@ -161,7 +170,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   paw :owner, :run, guild, %{admin_channel: nil} = state do
     Connection.say(
       """
-      Please, use the `#{state.message_handler}admin_channel_here` to define a admin channel for the bot!
+      Please, use the `#{state.command_prefix}admin_channel_here` to define a admin channel for the bot!
       """,
       guild
     )
@@ -194,9 +203,35 @@ defmodule RyushDiscord.Guild.ServerProcess do
   ###################
   # NORMAL COMMANDS #
   ###################
+
+  paw :anyone, :mention, %{message: message} = guild, state do
+    cond do
+      String.contains?(message, "about") ->
+        GuildTalk.process(guild, state, :about)
+
+      String.contains?(message, "help") ->
+        GuildTalk.process(guild, state, :help)
+
+      true ->
+        :ok
+    end
+
+    {:end, state}
+  end
+
+  paw :anyone, :run, %{message: "about"} = guild, state do
+    GuildTalk.process(guild, state, :about)
+    {:end, state}
+  end
+
+  paw :anyone, :run, %{message: "help"} = guild, state do
+    GuildTalk.process(guild, state, :help)
+    {:end, state}
+  end
+
   # Default handler
   paw :anyone, :run, guild, state do
-    Logger.warn("Not handled: guild |#{inspect(guild)}| state |#{inspect(state)}|")
+    Logger.debug("Not handled: guild |#{inspect(guild)}| state |#{inspect(state)}|")
     {:end, state}
   end
 end

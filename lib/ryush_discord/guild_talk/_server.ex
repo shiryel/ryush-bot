@@ -59,6 +59,12 @@ defmodule RyushDiscord.GuildTalk.TalkServer do
       :e621 ->
         GuildTalk.E621.paw_run(state.step, guild, guild_state, state)
 
+      :about ->
+        GuildTalk.About.paw_run(state.step, guild, guild_state, state)
+
+      :help ->
+        GuildTalk.Help.paw_run(state.step, guild, guild_state, state)
+
       not_handled ->
         Logger.error("Talk flow not handled: #{not_handled}")
     end
