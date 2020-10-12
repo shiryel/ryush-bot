@@ -5,7 +5,7 @@ defmodule Utils.ConsoleLogger do
   def format(level, message, _timestamp, metadata) do
     case level do
       :debug ->
-        "[#{metadata[:file]}]\n#{message}\n\n"
+        "[#{metadata[:file]} #{metadata[:line]}]\n#{message}\n\n"
 
       :info ->
         "[INFO] #{message}\n"

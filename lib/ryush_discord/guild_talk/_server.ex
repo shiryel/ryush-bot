@@ -5,9 +5,17 @@ defmodule RyushDiscord.GuildTalk.TalkServer do
   @enforce_keys ~w|talking_about|a
   defstruct talking_about: nil,
             step: :start,
-            cache: []
+            cache: nil,
+            last_emoji_message_id: nil,
+            message_ids: []
 
-  @type t :: %__MODULE__{talking_about: atom(), step: atom(), cache: []}
+  @type t :: %__MODULE__{
+          talking_about: atom(),
+          step: atom(),
+          cache: %{},
+          last_emoji_message_id: String.t(),
+          message_ids: [String.t()]
+        }
 
   use GenServer, restart: :transient
 
@@ -34,11 +42,41 @@ defmodule RyushDiscord.GuildTalk.TalkServer do
   end
 
   @impl true
+  def handle_call(
+        {:process, :continue_talk, %{is_myself?: true} = guild, guild_state},
+        _from,
+        state
+      ) do
+    state = %{state | message_ids: [guild.message_id | state.message_ids]}
+
+    {:reply, guild_state, state}
+  end
+
+  def handle_call(
+        {:process, :continue_talk, %{emoji: %{name: _}} = guild, guild_state},
+        _from,
+        state
+      ) do
+    state = %{
+      state
+      | last_emoji_message_id: guild.message_id,
+        message_ids: [guild.message_id | state.message_ids]
+    }
+
+    process(state.talking_about, guild, guild_state, state)
+  end
+
   def handle_call({:process, :continue_talk, guild, guild_state}, _from, state) do
+    guild_state = %{guild_state | last_message_user_id: guild.user_id}
+    state = %{state | message_ids: [guild.message_id | state.message_ids]}
+
     process(state.talking_about, guild, guild_state, state)
   end
 
   def handle_call({:process, about, guild, guild_state}, _from, state) do
+    guild_state = %{guild_state | last_message_user_id: guild.user_id}
+    state = %{state | message_ids: [guild.message_id | state.message_ids]}
+
     process(about, guild, guild_state, state)
   end
 

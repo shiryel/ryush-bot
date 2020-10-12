@@ -21,14 +21,9 @@ defmodule RyushDiscord.GuildFlow.FlowBehaviour do
       @doc """
       Starts the `#{__MODULE__}` server with the options that are specific to the server struct
       """
-      @spec start(struct: __MODULE__.t | [any]) :: DynamicSupervisor.on_start_child
-      def start(options) when is_struct(options) do
-        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, struct: options})
-      end
-
+      @spec start(map()) :: DynamicSupervisor.on_start_child
       def start(options) do
-        struct = __MODULE__.__struct__(options)
-        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, struct: struct})
+        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, [struct: options]})
       end
 
       @doc """

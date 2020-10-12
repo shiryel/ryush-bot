@@ -21,6 +21,8 @@ defmodule Ryush.Application do
       {Phoenix.PubSub, name: Ryush.PubSub},
       # Start the Endpoint (http/https)
       RyushWeb.Endpoint,
+      # Start the Guild Emojer
+      RyushDiscord.GuildEmojer.EmojerServer,
       # Guild Dynamic Supervisor
       {DynamicSupervisor, name: RyushDiscord.GuildSupervisor, strategy: :one_for_one},
       # Start the Guild Registry and DynamicSupervisor

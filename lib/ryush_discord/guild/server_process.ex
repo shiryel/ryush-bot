@@ -4,7 +4,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
   """
 
   require Logger
-  alias RyushDiscord.{GuildTalk, Connection}
+  alias RyushDiscord.{GuildEmojer, GuildTalk, Connection}
 
   use RyushDiscord.Guild.GuildBehaviour
 
@@ -24,8 +24,17 @@ defmodule RyushDiscord.Guild.ServerProcess do
     end
   end
 
-  # Ignore myself
-  paw :system, :pre_process, %{is_myself?: true}, state do
+  # Myself
+  paw :system, :pre_process, %{is_myself?: true} = guild, state do
+    GuildEmojer.run(guild)
+
+    case GuildTalk.process(guild, state, :continue_talk) do
+      {:ok, state} ->
+        {:end, state}
+
+      _ ->
+        {:end, state}
+    end
     {:end, state}
   end
 
@@ -44,6 +53,17 @@ defmodule RyushDiscord.Guild.ServerProcess do
       {:owner, :mention, guild, state}
     else
       {:anyone, :mention, guild, state}
+    end
+  end
+
+  # When is not a message just continue the talk...
+  paw :system, :pre_process, %{message: message} = guild, state, when: is_nil(message) do
+    case GuildTalk.process(guild, state, :continue_talk) do
+      {:ok, state} ->
+        {:end, state}
+
+      _ ->
+        {:end, state}
     end
   end
 

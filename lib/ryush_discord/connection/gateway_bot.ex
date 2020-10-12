@@ -144,6 +144,9 @@ defmodule RyushDiscord.Connection.GatewayBot do
       "MESSAGE_CREATE" ->
         MessageWorkflow.message_create(msg, state)
 
+      "MESSAGE_REACTION_ADD" ->
+        MessageWorkflow.message_reaction_add(msg, state)
+
       other ->
         Logger.debug(other)
     end

@@ -106,10 +106,36 @@ defmodule RyushDiscord.Connection.ApiBot do
     :ok
   end
 
-  def get_owner_id(guild) do
-    case get("/guilds/#{guild.guild_id}",
+  def update_message(channel_id, message_id, body, bot_token) do
+    case(
+      patch("/channels/#{channel_id}/messages/#{message_id}", body,
+        headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
+      )
+    ) do
+      {:ok, _} ->
+        :ok
+
+      {:error, error} ->
+        Logger.warn(error)
+    end
+
+    :ok
+  end
+
+  def delete_message(channel_id, message_id, bot_token) do
+    case delete("/channels/#{channel_id}/messages/#{message_id}", headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]) do
+      {:ok, _} ->
+        :ok
+
+      {:error, error} ->
+        Logger.warn(error)
+    end
+  end
+
+  def get_owner_id(guild_id, bot_token) do
+    case get("/guilds/#{guild_id}",
            headers: [
-             {"authorization", "Bot #{guild.bot_token}"},
+             {"authorization", "Bot #{bot_token}"},
              {"content-type", "application/json"}
            ]
          ) do
@@ -125,6 +151,18 @@ defmodule RyushDiscord.Connection.ApiBot do
 
       {:error, error} ->
         {:error, error}
+    end
+  end
+
+  def add_reaction(channel_id, message_id, emoji, bot_token) do
+    case put("/channels/#{channel_id}/messages/#{message_id}/reactions/#{emoji}/@me", "",
+           headers: [{"authorization", "Bot #{bot_token}"}]
+         ) do
+      {:ok, _} ->
+        :ok
+
+      error ->
+        Logger.warn(error)
     end
   end
 end

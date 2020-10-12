@@ -6,9 +6,15 @@ defmodule RyushDiscord.Guild.GuildServer do
   """
   defstruct command_prefix: nil,
             admin_channel: nil,
-            owner_id: nil
+            owner_id: nil,
+            last_message_user_id: nil
 
-  @type t :: %__MODULE__{command_prefix: binary(), admin_channel: binary(), owner_id: binary()}
+  @type t :: %__MODULE__{
+          command_prefix: String.t(),
+          admin_channel: String.t(),
+          owner_id: String.t(),
+          last_message_user_id: String.t()
+        }
 
   alias RyushDiscord.Guild
   alias Guild.{GuildRegistry, ServerProcess}
@@ -20,12 +26,14 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   def start_link(guild: guild) do
     Mnesia.wait_for_tables([__MODULE__], 2000)
-    Mnesia.create_table(__MODULE__, []) # defaults the attributes to [key, val]
+    # defaults the attributes to [key, val]
+    Mnesia.create_table(__MODULE__, [])
 
     state =
       case fn -> Mnesia.read(__MODULE__, guild.guild_id) end |> Mnesia.transaction() do
         {:atomic, [{_, _, %{command_prefix: command_prefix, admin_channel: admin_channel}}]} ->
           Logger.debug("Database found! updating...")
+
           %__MODULE__{}
           |> Map.put(:command_prefix, command_prefix)
           |> Map.put(:admin_channel, admin_channel)

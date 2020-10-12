@@ -6,9 +6,11 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
 
   require Logger
 
-  defp is_mentioning_me?(mentions) when is_list(mentions) do
+  defp is_mentioning_me?(mentions, state) when is_list(mentions) do
+    bot_user_id = state.bot_user_id
+
     Enum.any?(mentions, fn
-      %{"username" => "Ryush"} -> true
+      %{"id" => ^bot_user_id} -> true
       _ -> false
     end)
   end
@@ -31,6 +33,9 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
        }),
        do: username
 
+  defp get_nick_or_username(%{"member" => %{"user" => %{"username" => username}}}),
+    do: username
+
   @doc """
   Process created messages
   """
@@ -39,6 +44,7 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
           "author" => %{
             "id" => user_id
           },
+          "id" => message_id,
           "channel_id" => channel_id,
           "content" => content,
           "guild_id" => guild_id,
@@ -50,8 +56,34 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
     %Guild{
       bot_token: state.bot_token,
       is_myself?: is_myself?(user_id, state),
-      mentions_me?: is_mentioning_me?(mentions),
+      mentions_me?: is_mentioning_me?(mentions, state),
       message: content,
+      message_id: message_id,
+      username: get_nick_or_username(msg),
+      user_id: user_id,
+      channel_id: channel_id,
+      guild_id: guild_id
+    }
+    |> Guild.process()
+  end
+
+  def message_reaction_add(
+        %{
+          "channel_id" => channel_id,
+          "emoji" => %{"id" => emoji_id, "name" => emoji_name},
+          "guild_id" => guild_id,
+          "message_id" => message_id,
+          "user_id" => user_id
+        } = msg,
+        state
+      ) do
+    %Guild{
+      bot_token: state.bot_token,
+      is_myself?: is_myself?(user_id, state),
+      mentions_me?: false,
+      message: nil,
+      emoji: %{id: emoji_id, name: emoji_name},
+      message_id: message_id,
       username: get_nick_or_username(msg),
       user_id: user_id,
       channel_id: channel_id,

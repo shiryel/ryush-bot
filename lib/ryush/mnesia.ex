@@ -15,9 +15,16 @@ defmodule Ryush.Mnesia do
 
   def start_link(_opts) do
     Logger.info("Starting the Mnesia database...")
+
     Task.start_link(fn ->
+      # if not stoped, the create_schema will not work!
+      Mnesia.stop()
       Mnesia.create_schema([node()])
+      |> inspect
+      |> Logger.info()
       Mnesia.start()
+      |> inspect
+      |> Logger.info()
     end)
   end
 end

@@ -119,7 +119,11 @@ defmodule RyushDiscord.GuildFlow.E621 do
     schedule_work(state.timer)
     schedule_update_db(state.last_guild.channel_id, 5000)
 
-    case RyushExternal.E621.get_random_post_urls(state.tags,
+    tags =
+      state.tags
+      |> String.split()
+
+    case RyushExternal.E621.get_random_post_urls(tags,
            rating: state.rating,
            score_min: state.score_min
          ) do

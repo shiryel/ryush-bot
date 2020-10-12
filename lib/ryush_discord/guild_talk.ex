@@ -21,6 +21,24 @@ defmodule RyushDiscord.GuildTalk do
   """
   @spec process(Guild.t(), Guild.GuildServer.t(), atom()) ::
           {:ok, Guild.GuildServer.t()} | {:error, :talk_not_found}
+  def process(%{is_myself?: true} = guild, guild_state, :continue_talk) do
+    if TalkRegistry.exists?(guild.channel_id, guild_state.last_message_user_id) do
+      response =
+        GenServer.call(
+          TalkRegistry.get_name(guild.channel_id, guild_state.last_message_user_id),
+          {:process, :continue_talk, guild, guild_state}
+        )
+
+      {:ok, response}
+    else
+      {:error, :talk_not_found}
+    end
+  catch
+    :exit, _ ->
+      Logger.warn("Talk server timeout")
+      {:ok, guild_state}
+  end
+
   def process(guild, guild_state, :continue_talk) do
     if TalkRegistry.exists?(guild) do
       response =
@@ -47,7 +65,11 @@ defmodule RyushDiscord.GuildTalk do
       {:ok, response}
     else
       Logger.info("Starting new talk: #{inspect(about)}")
-      DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__.TalkServer, guild: guild, about: about})
+
+      DynamicSupervisor.start_child(
+        RyushDiscord.GuildSupervisor,
+        {__MODULE__.TalkServer, guild: guild, about: about}
+      )
 
       response =
         GenServer.call(TalkRegistry.get_name(guild), {:process, about, guild, guild_state})
