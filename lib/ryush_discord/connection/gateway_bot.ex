@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.Connection.GatewayBot do
   @moduledoc """
   Websocket bot connection
@@ -29,15 +33,16 @@ defmodule RyushDiscord.Connection.GatewayBot do
         WebSockex.start_link(url <> @gateway_params, __MODULE__, state, name: __MODULE__)
 
       {:error, {:rate_limit, rate_limit}} ->
-        Logger.warn("Rate Limited!!!")
+        Logger.warning("Rate Limited!!!")
         :timer.sleep(rate_limit)
         {:error, :rate_limit}
 
       {:error, :unauthorized} ->
-        Logger.error("Token unauthorized!")
+        Logger.critical("Token unauthorized!")
         {:error, :unauthorized}
 
       {:error, error} ->
+        Logger.critical("Unexpected error! #{inspect(error, pretty: true)}")
         {:error, error}
     end
   end
@@ -93,7 +98,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
           {msg, state}
 
         {:error, error} ->
-          Logger.error(inspect(error))
+          Logger.error("Fail on parse frame: #{inspect(error, pretty: true)}")
           {:ignore, state}
       end
 
@@ -118,7 +123,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
   end
 
   def handle_frame({type, msg}, state) do
-    Logger.warn(~s|Type "#{inspect(type)}" or msg "#{inspect(msg)}" not handled|)
+    Logger.warning(~s|Type "#{inspect(type)}" or msg "#{inspect(msg, pretty: true)}" not handled|)
     {:ok, state}
   end
 
@@ -129,7 +134,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
 
   @impl true
   def handle_cast({:send, {type, msg} = frame}, state) do
-    Logger.debug("Sending #{type} frame with payload: #{msg}")
+    Logger.debug("Sending #{type} frame with payload: #{inspect(msg, pretty: true)}")
     {:reply, frame, state}
   end
 
@@ -148,7 +153,7 @@ defmodule RyushDiscord.Connection.GatewayBot do
         MessageWorkflow.message_reaction_add(msg, state)
 
       other ->
-        Logger.debug(other)
+        Logger.debug(inspect(other, pretty: true))
     end
   end
 end

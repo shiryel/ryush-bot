@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
   @moduledoc """
   Handshake workflow used by GatewayBot
@@ -30,7 +34,7 @@ defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
           s: seq
         } = state
       ) do
-    Logger.info("Resuming connection...")
+    Logger.notice("Resuming connection...")
 
     command =
       %{
@@ -51,7 +55,7 @@ defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
   # Normal Workflow #
   ###################
   def connect_workflow(_conn, state) do
-    Logger.info("Starting new connection...")
+    Logger.notice("Starting new connection...")
 
     schedule_identify(1000)
     schedule_heartbeat(state.heartbeat_interval)
@@ -70,7 +74,7 @@ defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
         } = _message,
         state
       ) do
-    Logger.info("Attempting to reconnect... (request from server)")
+    Logger.notice("Attempting to reconnect... (request from server)")
 
     # Need to reconnect, but WebSockex dont suport it...
     {:close, {4009, "Session timed out"}, state}
@@ -210,7 +214,7 @@ defmodule RyushDiscord.Connection.GatewayBot.HandshakeWorkflow do
   end
 
   def info_workflow(message, state) do
-    Logger.error("Info workflow not handled for message: #{inspect(message)}")
+    Logger.error("Info workflow not handled for message: #{inspect(message, pretty: true)}")
     {:ok, state}
   end
 end

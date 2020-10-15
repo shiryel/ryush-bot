@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.GuildFlow.E621 do
   @moduledoc """
   Connects your channel to the E621 API, getting a image each `:timer` minutes

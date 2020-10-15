@@ -53,6 +53,9 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
         state
       ) do
 
+    inspect(msg, pretty: true)
+    |> Logger.debug()
+
     %Guild{
       bot_token: state.bot_token,
       is_myself?: is_myself?(user_id, state),

@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.Guild.GuildServer do
   @moduledoc """
   The guild main controller, will foward some talks to `RyushDiscord.Guild.Talk.TalkServer`

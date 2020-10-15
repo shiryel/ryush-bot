@@ -57,6 +57,11 @@ config :ryush, RyushWeb.Endpoint,
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: {Utils.ConsoleLogger, :format}, metadata: :all
 
+alias RyushDiscord.Connection.{GatewayBot, ApiBot}
+disable_debug = [GatewayBot, ApiBot, RyushDiscord.GuildFlow.E621]
+
+Enum.each(disable_debug, &Logger.put_module_level(&1, :info))
+
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.
 config :phoenix, :stacktrace_depth, 20

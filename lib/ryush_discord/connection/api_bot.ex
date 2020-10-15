@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.Connection.ApiBot do
   @moduledoc """
   APIs for controlling the bot
@@ -80,7 +84,7 @@ defmodule RyushDiscord.Connection.ApiBot do
         {:error, {:rate_limit, retry_after}}
 
       dump ->
-        Logger.error(inspect(dump))
+        Logger.error(inspect(dump, pretty: true))
         {:error, :other}
     end
   end
@@ -95,12 +99,11 @@ defmodule RyushDiscord.Connection.ApiBot do
         post("/channels/#{channel_id}/messages", body,
           headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
         )
-
-      # |> inspect()
-      # |> Logger.debug()
+        |> inspect(pretty: true)
+        |> Logger.debug()
 
       {:error, _} ->
-        Logger.error("Invalid body #{inspect(body)}")
+        Logger.error("Invalid body: \n#{inspect(body, pretty: true)}")
     end
 
     :ok
@@ -112,23 +115,29 @@ defmodule RyushDiscord.Connection.ApiBot do
         headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
       )
     ) do
-      {:ok, _} ->
-        :ok
+      {:ok, msg} ->
+        inspect(msg, pretty: true)
+        |> Logger.debug()
 
       {:error, error} ->
-        Logger.warn(error)
+        inspect(error, pretty: true)
+        |> Logger.warn()
     end
 
     :ok
   end
 
   def delete_message(channel_id, message_id, bot_token) do
-    case delete("/channels/#{channel_id}/messages/#{message_id}", headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]) do
-      {:ok, _} ->
-        :ok
+    case delete("/channels/#{channel_id}/messages/#{message_id}",
+           headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
+         ) do
+      {:ok, msg} ->
+        inspect(msg, pretty: true)
+        |> Logger.debug()
 
       {:error, error} ->
-        Logger.warn(error)
+        inspect(error, pretty: true)
+        |> Logger.warn()
     end
   end
 
@@ -150,6 +159,9 @@ defmodule RyushDiscord.Connection.ApiBot do
         {:ok, owner_id}
 
       {:error, error} ->
+        inspect(error, pretty: true)
+        |> Logger.warn()
+
         {:error, error}
     end
   end
@@ -158,11 +170,15 @@ defmodule RyushDiscord.Connection.ApiBot do
     case put("/channels/#{channel_id}/messages/#{message_id}/reactions/#{emoji}/@me", "",
            headers: [{"authorization", "Bot #{bot_token}"}]
          ) do
-      {:ok, _} ->
-        :ok
+      {:ok, msg} ->
+        inspect(msg, pretty: true)
+        |> Logger.debug()
 
       error ->
-        Logger.warn(error)
+        inspect(error, pretty: true)
+        |> Logger.warn()
     end
+
+    :ok
   end
 end

@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.GuildEmojer.EmojerServer do
   @moduledoc """
   """
@@ -52,7 +56,7 @@ defmodule RyushDiscord.GuildEmojer.EmojerServer do
   @impl true
   def terminate(reason, state) do
     Logger.debug(
-      "Terminating Guild Emojer\n Reason: #{inspect(reason)}\n State: #{inspect(state)} "
+      "Terminating Guild Emojer\n Reason: #{inspect(reason)}\n State:\n #{inspect(state, pretty: :true)} "
     )
   end
 end

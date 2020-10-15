@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Shiryel
+#
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+
 defmodule RyushDiscord.GuildFlow.FlowBehaviour do
   @moduledoc """
   Creates a GenServer with default functions to `start/1` `stop/1` `exists?/1`
