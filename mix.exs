@@ -5,7 +5,7 @@ defmodule Ryush.MixProject do
     [
       app: :ryush,
       version: "0.1.0",
-      elixir: "~> 1.7",
+      elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
