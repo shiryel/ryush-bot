@@ -7,7 +7,7 @@ Ryush is a discord bot under construction
 
 ## How to use
 
-### ⚡ [Fist click here to invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=764685221756796959&permissions=26688&scope=bot)
+### ⚡ [First click here to invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=764685221756796959&permissions=26688&scope=bot)
 
 The permissions that he needs:
 - Send Messages
