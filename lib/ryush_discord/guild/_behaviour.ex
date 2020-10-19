@@ -68,7 +68,7 @@ defmodule RyushDiscord.Guild.GuildBehaviour do
   def paw_result({security, name, guild, state}, module) do
     apply(module, :paw_run, [security, name, guild, state])
   end
-
+  
   def paw_result({:end, state}, _module) do
     {:noreply, state}
   end

@@ -27,7 +27,15 @@ defmodule RyushDiscord.GuildFlow.FlowBehaviour do
       """
       @spec start(map()) :: DynamicSupervisor.on_start_child
       def start(options) do
-        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, [struct: options]})
+        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, [struct: options, new: true]})
+      end
+
+      @doc """
+      Start from the DB, changing the options `:new` to `:false`
+      """
+      @spec start_from_db(map()) :: DynamicSupervisor.on_start_child
+      def start_from_db(options) do
+        DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {__MODULE__, [struct: options, new: false]})
       end
 
       @doc """
@@ -46,8 +54,12 @@ defmodule RyushDiscord.GuildFlow.FlowBehaviour do
         FlowRegistry.exists?(__MODULE__, guild)
       end
 
-      defp get_server_name(guild) do
+      defp get_server_name(%Guild{} = guild) do
         {:via, Registry, {FlowRegistry, {__MODULE__, guild.channel_id}}}
+      end
+
+      defp get_server_name(channel_id) do
+        {:via, Registry, {FlowRegistry, {__MODULE__, channel_id}}}
       end
     end
   end

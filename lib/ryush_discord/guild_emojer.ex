@@ -27,8 +27,8 @@ defmodule RyushDiscord.GuildEmojer do
   Run the Emojer on a given guild
   """
   @spec run(Guild.t()) :: :ok
-  def run(guild) do
-    GenServer.call(EmojerServer, {:run, guild})
+  def run(msg) do
+    GenServer.call(EmojerServer, {:run, msg})
   catch
     :exit, _ ->
       Logger.warn("Emojer server timeout")

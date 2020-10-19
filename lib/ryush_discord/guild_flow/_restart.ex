@@ -3,7 +3,10 @@
 # You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
 
 defmodule RyushDiscord.GuildFlow.FlowRestart do
-  alias :mnesia, as: Mnesia
+  @moduledoc """
+  Restart the flows using the `RyushDiscord.GuildFlow.FlowBehaviour.on_restart/0` behaviour function
+  """
+
   alias RyushDiscord.GuildFlow
 
   require Logger

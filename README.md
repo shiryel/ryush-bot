@@ -3,11 +3,53 @@
 
 Ryush is a discord bot under construction
 
-<img src="ryush.png" alt="Ryush profile pic" height="400">
+<img src="assets/ryush.png" alt="Ryush profile pic" height="400">
+
+## How to use
+
+### ⚡ [Fist click here to invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=764685221756796959&permissions=26688&scope=bot)
+
+The permissions that he needs:
+- Send Messages
+- Manage Messages
+- Embed Links
+- Add Reactions
+
+Then you can use `!help` or `@Ryush help` to see the comands
+
+**To change the prefix use `!change_prefix` or `@change_prefix`**
+
+The permissions for each `managed command` can be configured by a administrator
+
+## Code structure
+
+For making this bot scalable, its used a **BUNCH** of dynamic supervisioned processes (powered by erlang 😝), it works, but needs caution when changing stuff, mainly because its use a Mnesia DB to keep the process state per node!
+
+So, you probably is wandering what is the flux, well... its like that:
+
+### Discord
+
+``` 
+API --> WebSocket --> Guild --> GuildTalk[command] --> Connection
+                        |             |--> GuildFlow[command] --> Connection
+                        v                       |--> GuildEmojer 
+                    GuildEmojer
+```
+
+- `API` is the discord API
+- `WebSocket` is the discord bot websocket connection
+- `Guild` is a `GenServer` that keeps a guild state
+- `GuildTalk` is a `GenServer` that keeps a talk with a user on a channel
+- `GuildFlow` is a `GenServer` that keeps a command running on a channel
+- `GuildEmojer` is a `GenServer` that handles puting emojis on the bot messages
+
+## Docs
+
+You can generate the docs with `mix docs` and then access the index.html from your browser!
 
 ## How to test
 
-With elixir and the phoenix framework installed:
+If you want to add new feature for your friends, you can change the code and then with elixir and the phoenix framework installed you can run:
 ```
 export BOT_TOKEN="you discord bot_token here"
 
@@ -20,10 +62,6 @@ mix phx.server
 ```
 
 Now you can test your bot on your discord and visit [`localhost:4000/dashboard`](http://localhost:4000/dashboard) to see the bot dashboard
-
-## Docs
-
-You can generate the docs with `mix docs` and then access the index from your browser
 
 # Legal Stuff
 

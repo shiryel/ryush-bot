@@ -96,11 +96,10 @@ defmodule RyushDiscord.Connection.ApiBot do
   def create_message(channel_id, body, bot_token) do
     case Jason.encode(body) do
       {:ok, body} ->
-        post("/channels/#{channel_id}/messages", body,
+        result = post("/channels/#{channel_id}/messages", body,
           headers: [{"authorization", "Bot #{bot_token}"}, {"content-type", "application/json"}]
         )
-        |> inspect(pretty: true)
-        |> Logger.debug()
+        Logger.debug(inspect(result, pretty: true))
 
       {:error, _} ->
         Logger.error("Invalid body: \n#{inspect(body, pretty: true)}")
@@ -180,5 +179,28 @@ defmodule RyushDiscord.Connection.ApiBot do
     end
 
     :ok
+  end
+
+  def get_guild_roles(guild_id, bot_token) do
+    case get("/guilds/#{guild_id}/roles",
+           headers: [
+             {"authorization", "Bot #{bot_token}"},
+             {"content-type", "application/json"}
+           ]
+         ) do
+      {:ok,
+       %Tesla.Env{
+         __client__: %Tesla.Client{adapter: nil, fun: nil, post: [], pre: []},
+         __module__: RyushDiscord.Connection.ApiBot,
+         body: roles
+       }} ->
+        {:ok, roles}
+
+      {:error, error} ->
+        inspect(error, pretty: true)
+        |> Logger.warn()
+
+        {:error, error}
+    end
   end
 end

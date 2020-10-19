@@ -8,16 +8,20 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   Uses the default behaviour `RyushDiscord.Guild.ServerProcess`
   """
-  defstruct command_prefix: nil,
-            admin_channel: nil,
+  defstruct command_prefix: "!",
+            notification_channel: nil,
+            last_message_user_id: nil,
             owner_id: nil,
-            last_message_user_id: nil
+            roles: [],
+            command_roles: %{e621: []}
 
   @type t :: %__MODULE__{
           command_prefix: String.t(),
-          admin_channel: String.t(),
+          notification_channel: String.t(),
+          last_message_user_id: String.t(),
           owner_id: String.t(),
-          last_message_user_id: String.t()
+          roles: [any],
+          command_roles: [{atom(), [String.t()]}]
         }
 
   alias RyushDiscord.Guild
@@ -28,26 +32,42 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   use GenServer, restart: :transient
 
-  def start_link(guild: guild) do
+  def start_link(msg: msg) do
     Mnesia.wait_for_tables([__MODULE__], 2000)
     # defaults the attributes to [key, val]
-    Mnesia.create_table(__MODULE__, [])
+    Mnesia.create_table(__MODULE__, disc_only_copies: [node()])
 
     state =
-      case fn -> Mnesia.read(__MODULE__, guild.guild_id) end |> Mnesia.transaction() do
-        {:atomic, [{_, _, %{command_prefix: command_prefix, admin_channel: admin_channel}}]} ->
+      case fn -> Mnesia.read(__MODULE__, msg.guild_id) end |> Mnesia.transaction() do
+        {:atomic,
+         [
+           {_, _,
+            %{
+              command_prefix: command_prefix,
+              command_roles: command_roles,
+              notification_channel: notification_channel,
+              roles: roles
+            }}
+         ]} ->
           Logger.debug("Database found! updating...")
 
           %__MODULE__{}
           |> Map.put(:command_prefix, command_prefix)
-          |> Map.put(:admin_channel, admin_channel)
+          |> Map.put(:notification_channel, notification_channel)
+          |> Map.put(:command_roles, command_roles)
+          |> Map.put(:roles, roles)
+
+        # This would work like a countinuous migration?
+        # Update DB on 5 seconds to 5 hours
+        # This is the migration time
+        # Process.send_after(self(), {:update_db, msg.guild_id}, Enum.random(5..(5 * 60 * 60)) * 1000)
 
         _ ->
           Logger.debug("Database not found")
           %__MODULE__{}
       end
 
-    GenServer.start_link(__MODULE__, state, name: get_server_name(guild))
+    GenServer.start_link(__MODULE__, state, name: get_server_name(msg))
   end
 
   @doc """
@@ -55,8 +75,8 @@ defmodule RyushDiscord.Guild.GuildServer do
 
   Used to create and find the guild servers through the `RyushDiscord.Guild.GuildRegistry`
   """
-  def get_server_name(guild) do
-    {:via, Registry, {GuildRegistry, guild.guild_id}}
+  def get_server_name(msg) do
+    {:via, Registry, {GuildRegistry, msg.guild_id}}
   end
 
   #############
@@ -70,8 +90,8 @@ defmodule RyushDiscord.Guild.GuildServer do
   end
 
   @impl true
-  def handle_cast({:process, guild}, state) do
-    ServerProcess.paw_run(:system, :pre_process, guild, state)
+  def handle_cast({:process, msg}, state) do
+    ServerProcess.paw_run(:system, :start, msg, state)
   end
 
   def handle_cast(request, state) do
@@ -86,8 +106,6 @@ defmodule RyushDiscord.Guild.GuildServer do
       Mnesia.write({__MODULE__, guild_id, state})
     end
     |> Mnesia.transaction()
-
-    Mnesia.dump_tables([__MODULE__])
 
     Logger.debug("Database #{__MODULE__} updated!")
 

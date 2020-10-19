@@ -29,9 +29,9 @@ defmodule RyushDiscord.GuildTalk.TalkServer do
   alias GuildTalk.TalkRegistry
 
   # Used by the `RyushDiscord.Talk.DynamicSupervisor` with Guilds
-  def start_link(guild: guild, about: about) do
+  def start_link(msg: msg, about: about) do
     GenServer.start_link(__MODULE__, %__MODULE__{talking_about: about},
-      name: TalkRegistry.get_name(guild)
+      name: TalkRegistry.get_name(msg)
     )
   end
 
@@ -47,41 +47,41 @@ defmodule RyushDiscord.GuildTalk.TalkServer do
 
   @impl true
   def handle_call(
-        {:process, :continue_talk, %{is_myself?: true} = guild, guild_state},
+        {:process, :continue_talk, %{is_myself?: true} = msg, guild_state},
         _from,
         state
       ) do
-    state = %{state | message_ids: [guild.message_id | state.message_ids]}
+    state = %{state | message_ids: [msg.message_id | state.message_ids]}
 
     {:reply, guild_state, state}
   end
 
   def handle_call(
-        {:process, :continue_talk, %{emoji: %{name: _}} = guild, guild_state},
+        {:process, :continue_talk, %{emoji: %{name: _}} = msg, guild_state},
         _from,
         state
       ) do
     state = %{
       state
-      | last_emoji_message_id: guild.message_id,
-        message_ids: [guild.message_id | state.message_ids]
+      | last_emoji_message_id: msg.message_id,
+        message_ids: [msg.message_id | state.message_ids]
     }
 
-    process(state.talking_about, guild, guild_state, state)
+    process(state.talking_about, msg, guild_state, state)
   end
 
-  def handle_call({:process, :continue_talk, guild, guild_state}, _from, state) do
-    guild_state = %{guild_state | last_message_user_id: guild.user_id}
-    state = %{state | message_ids: [guild.message_id | state.message_ids]}
+  def handle_call({:process, :continue_talk, msg, guild_state}, _from, state) do
+    guild_state = %{guild_state | last_message_user_id: msg.user_id}
+    state = %{state | message_ids: [msg.message_id | state.message_ids]}
 
-    process(state.talking_about, guild, guild_state, state)
+    process(state.talking_about, msg, guild_state, state)
   end
 
-  def handle_call({:process, about, guild, guild_state}, _from, state) do
-    guild_state = %{guild_state | last_message_user_id: guild.user_id}
-    state = %{state | message_ids: [guild.message_id | state.message_ids]}
+  def handle_call({:process, about, msg, guild_state}, _from, state) do
+    guild_state = %{guild_state | last_message_user_id: msg.user_id}
+    state = %{state | message_ids: [msg.message_id | state.message_ids]}
 
-    process(about, guild, guild_state, state)
+    process(about, msg, guild_state, state)
   end
 
   @impl true
@@ -93,19 +93,34 @@ defmodule RyushDiscord.GuildTalk.TalkServer do
   # PROCESS #
   ###########
 
-  defp process(about, guild, guild_state, state) do
+  defp process(about, msg, guild_state, state) do
     case about do
-      :start ->
-        GuildTalk.Start.paw_run(state.step, guild, guild_state, state)
+      #########
+      # ADMIN #
+      #########
+      :change_prefix ->
+        GuildTalk.ChangePrefix.paw_run(state.step, msg, guild_state, state)
 
+      :manage_commands ->
+        GuildTalk.ManageCommands.paw_run(state.step, msg, guild_state, state)
+
+      :set_notification_channel ->
+        GuildTalk.SetNotificationChannel.paw_run(state.step, msg, guild_state, state)
+
+      ###########
+      # MANAGED #
+      ###########
       :e621 ->
-        GuildTalk.E621.paw_run(state.step, guild, guild_state, state)
+        GuildTalk.E621.paw_run(state.step, msg, guild_state, state)
 
+      ##########
+      # ANYONE #
+      ##########
       :about ->
-        GuildTalk.About.paw_run(state.step, guild, guild_state, state)
+        GuildTalk.About.paw_run(state.step, msg, guild_state, state)
 
       :help ->
-        GuildTalk.Help.paw_run(state.step, guild, guild_state, state)
+        GuildTalk.Help.paw_run(state.step, msg, guild_state, state)
 
       not_handled ->
         Logger.error("Talk flow not handled: #{not_handled}")

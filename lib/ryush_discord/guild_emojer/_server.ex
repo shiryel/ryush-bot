@@ -4,7 +4,9 @@
 
 defmodule RyushDiscord.GuildEmojer.EmojerServer do
   @moduledoc """
+  Schedule emojis to be added on the next message (called from `RyushDiscord.Guild.GuildServer`)
   """
+
   @type t :: [{String.t(), [String.t()]}]
 
   require Logger

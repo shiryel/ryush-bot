@@ -1,36 +1,55 @@
+alias RyushDiscord.{Guild, GuildTalk, GuildFlow, GuildEmojer}
+
 [
   main: "readme",
+  logo: "assets/ryush.png",
+  assets: "assets",
   extras: [
     "README.md"
+  ],
+  source_url: "https://github.com/shiryel/ryush_bot",
+  nest_modules_by_prefix: [
+    RyushDiscord.Connection,
+    Guild,
+    GuildTalk,
+    GuildFlow,
+    GuildEmojer
   ],
   groups_for_modules: [
     Base: [
       Ryush,
-      Ryush.Application,
+      Ryush.Application
     ],
     Discord_Connection: [
+      RyushDiscord.Connection,
       RyushDiscord.Connection.ApiBot,
       RyushDiscord.Connection.GatewayBot,
       RyushDiscord.Connection.GatewayBot.HandshakeWorkflow,
       RyushDiscord.Connection.GatewayBot.MessageWorkflow
     ],
     Discord_Guild: [
-      RyushDiscord.Guild,
-      RyushDiscord.Guild.Talk,
-      RyushDiscord.Guild.GuildServer,
-      RyushDiscord.Guild.GuildRegistry,
-      RyushDiscord.Guild.GuildSupervisor,
-      RyushDiscord.Talk.TalkServer,
-      RyushDiscord.Talk.TalkRegistry,
-      RyushDiscord.Talk.TalkSupervisor,
-      RyushDiscord.Flow.FlowServer,
-      RyushDiscord.Flow.FlowRegistry,
-      RyushDiscord.Flow.FlowSupervisor
+      Guild,
+      Guild.GuildBehaviour,
+      Guild.GuildServer,
+      Guild.Permissions,
+      Guild.ServerProcess,
+      GuildTalk,
+      GuildTalk.E621,
+      GuildTalk.TalkBehaviour,
+      GuildTalk.TalkServer,
+      GuildFlow,
+      GuildFlow.E621,
+      GuildFlow.FlowBehaviour,
+      GuildFlow.FlowRestart,
+      GuildEmojer,
+      GuildEmojer.EmojerServer
+    ],
+    External: [
+      RyushExternal.E621
     ],
     Database: [
       Ryush.Repo,
-      Ryush.Discord,
-      Ryush.Discord.Guild
+      Ryush.Mnesia
     ],
     Phoenix: [
       RyushWeb,
@@ -42,5 +61,8 @@
       RyushWeb.ErrorView,
       RyushWeb.ErrorHelpers
     ],
+    Utils: [
+      Utils.ConsoleLogger
+    ]
   ]
 ]

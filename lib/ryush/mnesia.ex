@@ -3,6 +3,10 @@
 # You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
 
 defmodule Ryush.Mnesia do
+  @moduledoc """
+  Starts the Mnesia DB
+  """
+
   alias :mnesia, as: Mnesia
 
   require Logger

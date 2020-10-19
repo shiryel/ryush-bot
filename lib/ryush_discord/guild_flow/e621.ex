@@ -1,16 +1,16 @@
 # Copyright (C) 2020 Shiryel
 #
-# You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
+# You should have received a copy of the GNU Affero General Public License v3.0 along with this program.
 
 defmodule RyushDiscord.GuildFlow.E621 do
   @moduledoc """
   Connects your channel to the E621 API, getting a image each `:timer` minutes
   """
 
-  defstruct last_guild: nil,
+  defstruct last_msg: nil,
             timer: 30,
             score_min: 50,
-            rating: "safe",
+            ratings: ["safe"],
             tags: [],
             show_sauce?: false,
             e621_cache: []
@@ -20,10 +20,10 @@ defmodule RyushDiscord.GuildFlow.E621 do
   alias :mnesia, as: Mnesia
 
   @type t :: %__MODULE__{
-          last_guild: Guild.t(),
+          last_msg: Guild.t(),
           timer: integer(),
           score_min: integer,
-          rating: String.t(),
+          ratings: [String.t()],
           tags: [String.t()],
           show_sauce?: boolean(),
           e621_cache: [term()]
@@ -43,13 +43,13 @@ defmodule RyushDiscord.GuildFlow.E621 do
       if String.match?(e621.url, ~r/.+webm/) do
         Connection.say(
           """
-          sauce: #{e621.id} 
+          sauce: #{e621.id}
           #{e621.url}
           """,
-          state.last_guild
+          state.last_msg
         )
       else
-        Connection.say(nil, state.last_guild, %{
+        Connection.say(nil, state.last_msg, %{
           title: e621.id,
           url: "https://e621.net/posts/#{e621.id}",
           image: %{url: e621.url},
@@ -57,7 +57,7 @@ defmodule RyushDiscord.GuildFlow.E621 do
         })
       end
     else
-      Connection.say("#{e621.url}", state.last_guild)
+      Connection.say("#{e621.url}", state.last_msg)
     end
   end
 
@@ -66,8 +66,8 @@ defmodule RyushDiscord.GuildFlow.E621 do
     Process.send_after(self(), :work, timer * 60 * 1000)
   end
 
-  def schedule_update_db(channel_id, timer_mm) do
-    Process.send_after(self(), {:update_db, channel_id}, timer_mm)
+  def schedule_update_db(timer_mm) do
+    Process.send_after(self(), :update_db, timer_mm)
   end
 
   #############
@@ -75,8 +75,43 @@ defmodule RyushDiscord.GuildFlow.E621 do
   #############
 
   @impl true
-  def start_link(struct: struct) do
-    GenServer.start_link(__MODULE__, struct, name: get_server_name(struct.last_guild))
+  # Used to only show the warning when its a new link from the USER! not the DB!
+  # Just ot dont explode the e621 API :P
+  def start_link(struct: struct, new: true) do
+    tags =
+      struct.tags
+      |> String.split()
+
+    size =
+      case RyushExternal.E621.get_quantity(tags,
+             ratings: struct.ratings,
+             score_min: struct.score_min
+           ) do
+        {:ok, size} ->
+          size
+
+        _ ->
+          # ignore error
+          320
+      end
+
+    if size < 300 do
+      Connection.say(
+        """
+        **Warning: The tags are too restrictive!**
+        Maybe repeated images will show in the future! 
+
+        Only #{size} images found!
+        """,
+        struct.last_msg
+      )
+    end
+
+    GenServer.start_link(__MODULE__, struct, name: get_server_name(struct.last_msg))
+  end
+
+  def start_link(struct: struct, new: false) do
+    GenServer.start_link(__MODULE__, struct, name: get_server_name(struct.last_msg))
   end
 
   @impl true
@@ -84,22 +119,22 @@ defmodule RyushDiscord.GuildFlow.E621 do
     Mnesia.wait_for_tables([__MODULE__], 2000)
 
     # defaults the attributes to [key, val]
-    Mnesia.create_table(__MODULE__, [])
+    Mnesia.create_table(__MODULE__, [disc_only_copies: [node()]])
 
-    {:atomic, keys} = 
-      fn -> Mnesia.all_keys(__MODULE__) end |> :mnesia.transaction()
+    {:atomic, keys} = fn -> Mnesia.all_keys(__MODULE__) end |> :mnesia.transaction()
 
     for key <- keys do
       case fn -> Mnesia.read(__MODULE__, key) end |> Mnesia.transaction() do
         {:atomic, [{_, _, state}]} ->
           Logger.debug("Database found! updating...")
 
-          start(state)
+          start_from_db(state)
 
         _ ->
           Logger.warn("Database not found")
       end
     end
+
     :ok
   end
 
@@ -113,7 +148,7 @@ defmodule RyushDiscord.GuildFlow.E621 do
   @impl true
   def handle_info(:work, %{e621_cache: [hd | tail]} = state) do
     schedule_work(state.timer)
-    schedule_update_db(state.last_guild.channel_id, 5000)
+    schedule_update_db(5000)
     send_e621(hd, state)
 
     {:noreply, %{state | e621_cache: tail}}
@@ -121,29 +156,28 @@ defmodule RyushDiscord.GuildFlow.E621 do
 
   def handle_info(:work, state) do
     schedule_work(state.timer)
-    schedule_update_db(state.last_guild.channel_id, 5000)
+    schedule_update_db(5000)
 
     tags =
       state.tags
       |> String.split()
 
-    case RyushExternal.E621.get_random_post_urls(tags,
-           rating: state.rating,
-           score_min: state.score_min
-         ) do
+    posts =
+      RyushExternal.E621.get_random_post_urls(tags,
+        ratings: state.ratings,
+        score_min: state.score_min
+      )
+
+    case posts do
       {:ok, []} ->
         Connection.say(
           "Error: Maybe a tag dont exists or is black-listed (needing your account)",
-          state.last_guild
+          state.last_msg
         )
 
         {:noreply, state}
 
       {:ok, [hd | tail]} ->
-        if length(tail) < 15 do
-          Connection.say("Warning: The tags are too restrictive!", state.last_guild)
-        end
-
         send_e621(hd, state)
         {:noreply, %{state | e621_cache: tail}}
 
@@ -153,9 +187,9 @@ defmodule RyushDiscord.GuildFlow.E621 do
     end
   end
 
-  def handle_info({:update_db, channel_id}, state) do
+  def handle_info(:update_db, state) do
     fn ->
-      Mnesia.write({__MODULE__, channel_id, state})
+      Mnesia.write({__MODULE__, state.last_msg.channel_id, state})
     end
     |> Mnesia.transaction()
 
@@ -167,7 +201,20 @@ defmodule RyushDiscord.GuildFlow.E621 do
   end
 
   @impl true
+  def terminate(:normal, state) do
+    Logger.debug("Terminating normaly Flow E621")
+
+    fn ->
+      Mnesia.delete_object({__MODULE__, state.last_msg.channel_id})
+    end
+    |> Mnesia.transaction()
+
+    Logger.debug("Database #{__MODULE__} deleted!")
+
+    {:stop, :normal, :ok, state}
+  end
+
   def terminate(reason, state) do
-    Logger.debug("Terminating Flow E621\n Reason: #{inspect(reason)}\n State: #{inspect(state)} ")
+    Logger.warn("Terminating Flow E621\n Reason: #{inspect(reason)}\n State: #{inspect(state)} ")
   end
 end

@@ -44,6 +44,9 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
           "author" => %{
             "id" => user_id
           },
+          "member" => %{
+            "roles" => role_ids
+          },
           "id" => message_id,
           "channel_id" => channel_id,
           "content" => content,
@@ -52,7 +55,6 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
         } = msg,
         state
       ) do
-
     inspect(msg, pretty: true)
     |> Logger.debug()
 
@@ -64,10 +66,15 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
       message_id: message_id,
       username: get_nick_or_username(msg),
       user_id: user_id,
+      user_role_ids: role_ids,
       channel_id: channel_id,
       guild_id: guild_id
     }
     |> Guild.process()
+  end
+
+  def message_create(msg, _state) do
+    Logger.warn("[MESSAGE_CREATE] not handled: #{inspect(msg)}")
   end
 
   def message_reaction_add(
@@ -93,9 +100,5 @@ defmodule RyushDiscord.Connection.GatewayBot.MessageWorkflow do
       guild_id: guild_id
     }
     |> Guild.process()
-  end
-
-  def message_create(msg, _state) do
-    Logger.warn("[MESSAGE_CREATE] not handled: #{inspect(msg)}")
   end
 end

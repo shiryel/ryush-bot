@@ -58,7 +58,12 @@ config :ryush, RyushWeb.Endpoint,
 config :logger, :console, format: {Utils.ConsoleLogger, :format}, metadata: :all
 
 alias RyushDiscord.Connection.{GatewayBot, ApiBot}
-disable_debug = [GatewayBot, ApiBot, RyushDiscord.GuildFlow.E621]
+alias GatewayBot.MessageWorkflow
+
+alias RyushDiscord.{Guild, GuildTalk}
+alias Guild.{GuildServer, Permissions}
+
+disable_debug = [Guild.ServerProcess, GuildTalk, GatewayBot, ApiBot, GuildServer, Permissions, MessageWorkflow, RyushExternal.E621]
 
 Enum.each(disable_debug, &Logger.put_module_level(&1, :info))
 

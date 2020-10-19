@@ -22,8 +22,10 @@ defmodule RyushDiscord.Guild do
             message_id: nil,
             username: nil,
             user_id: nil,
+            user_role_ids: [],
             channel_id: nil,
-            guild_id: nil
+            guild_id: nil,
+            permissions: nil
 
   @type t :: %__MODULE__{
           bot_token: binary(),
@@ -34,8 +36,10 @@ defmodule RyushDiscord.Guild do
           message_id: binary(),
           username: binary(),
           user_id: binary(),
+          user_role_ids: [String.t()],
           channel_id: binary(),
-          guild_id: binary()
+          guild_id: binary(),
+          permissions: __MODULE__.Permissions.t() | nil
         }
 
   require Logger
@@ -48,15 +52,15 @@ defmodule RyushDiscord.Guild do
   If the server is not open, opens it and then process
   """
   @spec process(t()) :: :ok
-  def process(guild) do
-    server_name = GuildServer.get_server_name(guild)
+  def process(msg) do
+    server_name = GuildServer.get_server_name(msg)
 
-    if GuildRegistry.exists?(guild) do
-      GenServer.cast(server_name, {:process, guild})
+    if GuildRegistry.exists?(msg) do
+      GenServer.cast(server_name, {:process, msg})
     else
-      Logger.info("starting new guild #{guild.guild_id}...")
-      DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {GuildServer, guild: guild})
-      GenServer.cast(server_name, {:process, guild})
+      Logger.info("starting new guild #{msg.guild_id}...")
+      DynamicSupervisor.start_child(RyushDiscord.GuildSupervisor, {GuildServer, msg: msg})
+      GenServer.cast(server_name, {:process, msg})
     end
   end
 end

@@ -25,16 +25,18 @@ defmodule RyushDiscord.GuildTalk do
   """
   @spec process(Guild.t(), Guild.GuildServer.t(), atom()) ::
           {:ok, Guild.GuildServer.t()} | {:error, :talk_not_found}
-  def process(%{is_myself?: true} = guild, guild_state, :continue_talk) do
-    if TalkRegistry.exists?(guild.channel_id, guild_state.last_message_user_id) do
+  def process(%{is_myself?: true} = msg, guild_state, :continue_talk) do
+    Logger.debug("is_myself found, continuing talk...")
+    if TalkRegistry.exists?(msg.channel_id, guild_state.last_message_user_id) do
       response =
         GenServer.call(
-          TalkRegistry.get_name(guild.channel_id, guild_state.last_message_user_id),
-          {:process, :continue_talk, guild, guild_state}
+          TalkRegistry.get_name(msg.channel_id, guild_state.last_message_user_id),
+          {:process, :continue_talk, msg, guild_state}
         )
 
       {:ok, response}
     else
+      Logger.debug("Talk not found!!!")
       {:error, :talk_not_found}
     end
   catch
@@ -43,16 +45,18 @@ defmodule RyushDiscord.GuildTalk do
       {:ok, guild_state}
   end
 
-  def process(guild, guild_state, :continue_talk) do
-    if TalkRegistry.exists?(guild) do
+  def process(msg, guild_state, :continue_talk) do
+    Logger.debug("Continuing talk...")
+    if TalkRegistry.exists?(msg) do
       response =
         GenServer.call(
-          TalkRegistry.get_name(guild),
-          {:process, :continue_talk, guild, guild_state}
+          TalkRegistry.get_name(msg),
+          {:process, :continue_talk, msg, guild_state}
         )
 
       {:ok, response}
     else
+      Logger.debug("Talk not found!!!")
       {:error, :talk_not_found}
     end
   catch
@@ -61,22 +65,23 @@ defmodule RyushDiscord.GuildTalk do
       {:ok, guild_state}
   end
 
-  def process(guild, guild_state, about) do
-    if TalkRegistry.exists?(guild) do
+  def process(msg, guild_state, about) do
+    if TalkRegistry.exists?(msg) do
+      Logger.debug("Continuing talk...")
       response =
-        GenServer.call(TalkRegistry.get_name(guild), {:process, about, guild, guild_state})
+        GenServer.call(TalkRegistry.get_name(msg), {:process, about, msg, guild_state})
 
       {:ok, response}
     else
-      Logger.info("Starting new talk: #{inspect(about)}")
+      Logger.debug("Starting new talk: #{inspect(about)}")
 
       DynamicSupervisor.start_child(
         RyushDiscord.GuildSupervisor,
-        {__MODULE__.TalkServer, guild: guild, about: about}
+        {__MODULE__.TalkServer, msg: msg, about: about}
       )
 
       response =
-        GenServer.call(TalkRegistry.get_name(guild), {:process, about, guild, guild_state})
+        GenServer.call(TalkRegistry.get_name(msg), {:process, about, msg, guild_state})
 
       {:ok, response}
     end
