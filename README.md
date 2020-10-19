@@ -32,8 +32,8 @@ So, you probably is wandering what is the flux, well... its like that:
 ``` 
 API --> WebSocket --> Guild --> GuildTalk[command] --> Connection
                         |             |--> GuildFlow[command] --> Connection
-                        v                       |--> GuildEmojer 
-                    GuildEmojer
+                        v                       |--> GuildEmojer --> Connection
+                    GuildEmojer --> Connection
 ```
 
 - `API` is the discord API
@@ -42,6 +42,7 @@ API --> WebSocket --> Guild --> GuildTalk[command] --> Connection
 - `GuildTalk` is a `GenServer` that keeps a talk with a user on a channel
 - `GuildFlow` is a `GenServer` that keeps a command running on a channel
 - `GuildEmojer` is a `GenServer` that handles puting emojis on the bot messages
+- `Connection` is just a layer to use the discord API with the internal `Guild` struct
 
 ## Docs
 
