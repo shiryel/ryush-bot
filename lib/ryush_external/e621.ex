@@ -43,17 +43,18 @@ defmodule RyushExternal.E621 do
   end
 
   @default %{score_min: 50, ratings: ["safe"]}
+  @default_blacklisted_tags ~w[-young -cub -loli -shota -gore -scat]
 
   defp get_posts(tags, options, limit) do
     tags =
-      tags
+      tags ++ @default_blacklisted_tags
       |> Enum.filter(fn x -> String.match?(x, ~r/[[:alnum:]]+/) end)
       |> Enum.join("+")
 
     %{score_min: score_min, ratings: rating} = Enum.into(options, @default)
 
     url =
-      "posts.json?tags=#{tags}+-flash+score:>=#{score_min}+#{ratings(rating)}order:random&limit=#{
+      "posts.json?tags=#{tags}+-young+-cub+-flash+score:>=#{score_min}+#{ratings(rating)}order:random&limit=#{
         limit
       }"
       |> URI.encode()

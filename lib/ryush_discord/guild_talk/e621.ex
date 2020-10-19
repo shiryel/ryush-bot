@@ -20,7 +20,7 @@ defmodule RyushDiscord.GuildTalk.E621 do
       **Click on the emoji and type the value!** (will update this message)
 
       ------------------------------------------
-      🇷 : `rating` => #{talk_state.cache.ratings}
+      🇷 : `rating` => #{Enum.reduce(talk_state.cache.ratings, "", &("#{&1} " <> &2))}
 
       👀 : `tags` => #{talk_state.cache.tags}
 
@@ -52,7 +52,7 @@ defmodule RyushDiscord.GuildTalk.E621 do
       **Click on the emoji and type the value!** (will update this message)
 
       ------------------------------------------
-      🇷 : `rating` => #{talk_state.cache.ratings}
+      🇷 : `rating` => #{Enum.reduce(talk_state.cache.ratings, "", &("#{&1} " <> &2))}
 
       👀 : `tags` => #{talk_state.cache.tags}
 
