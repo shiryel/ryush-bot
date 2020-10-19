@@ -17,7 +17,7 @@ The permissions that he needs:
 
 Then you can use `!help` or `@Ryush help` to see the comands
 
-**To change the prefix use `!change_prefix` or `@change_prefix`**
+**To change the prefix use `!change_prefix` or `@Ryush change_prefix`**
 
 The permissions for each `managed command` can be configured by a administrator
 
