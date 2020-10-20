@@ -32,7 +32,8 @@ So, you probably is wandering what is the flux, well... its like that:
 ``` 
 API --> WebSocket --> Guild --> GuildTalk[command] --> Connection
                         |             |--> GuildFlow[command] --> Connection
-                        v                       |--> GuildEmojer --> Connection
+                        |             |--> GuildEmojer --> Connection
+                        v
                     GuildEmojer --> Connection
 ```
 
