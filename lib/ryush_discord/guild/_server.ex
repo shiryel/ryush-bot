@@ -4,9 +4,12 @@
 
 defmodule RyushDiscord.Guild.GuildServer do
   @moduledoc """
-  The guild main controller, will foward some talks to `RyushDiscord.Guild.Talk.TalkServer`
+  The guild controller, dynamicaly created for each guild, will foward the commands to `RyushDiscord.GuildTalk.TalkServer`
+  
+  The state is used to keep the guild configuration and some important information that needs to be view each time someone sends a message on a guild
+  To keep the state configuration between crash and restarts its used a `Mnesia` DB who writes the information on disck, that information is only updated when important information change after 5 seconds (to prevent invalid states and keep the source of thruth clean)
 
-  Uses the default behaviour `RyushDiscord.Guild.ServerProcess`
+  To prevent race conditions and update state, the communication with `RyushDiscord.GuildTalk.TalkServer` is made with calls instead of casts, providing back pressure and making possible to update the state of this module
   """
   defstruct command_prefix: "!",
             notification_channel: nil,

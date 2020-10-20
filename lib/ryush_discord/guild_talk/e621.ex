@@ -3,9 +3,7 @@
 # You should have received a copy of the GNU Affero General Public License v3.0 along with this program. 
 
 defmodule RyushDiscord.GuildTalk.E621 do
-  @moduledoc """
-  Talk to send messages automaticaly periodically using the `RyushDiscord.Flow.E621`
-  """
+  @moduledoc false
 
   alias RyushDiscord.{GuildEmojer, GuildFlow, GuildTalk, Connection}
   alias GuildFlow.{E621}

@@ -4,7 +4,7 @@
 
 defmodule RyushDiscord.Guild.Permissions do
   @moduledoc """
-  Handle permissions on a msg
+  Handle permissions on a `t:RyushDiscord.Guild.t()`, used on the `RyushDiscord.Guild.ServerProcess`
   """
 
   defstruct roles: [],

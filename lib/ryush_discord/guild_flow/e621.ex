@@ -5,6 +5,8 @@
 defmodule RyushDiscord.GuildFlow.E621 do
   @moduledoc """
   Connects your channel to the E621 API, getting a image each `:timer` minutes
+
+  To keep the state configuration between crash and restarts its used a `Mnesia` DB who writes the information on disck, that information is only updated when important information change after 5 seconds (to prevent invalid states and keep the source of thruth clean)
   """
 
   defstruct last_msg: nil,

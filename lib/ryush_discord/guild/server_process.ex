@@ -4,7 +4,7 @@
 
 defmodule RyushDiscord.Guild.ServerProcess do
   @moduledoc """
-  The default process implementation of the `RyushDiscord.Guild.GuildServer`
+  Defines the `c:RyushDiscord.Guild.GuildBehaviour.paw_run/4` used by `RyushDiscord.Guild.GuildServer`
   """
 
   require Logger

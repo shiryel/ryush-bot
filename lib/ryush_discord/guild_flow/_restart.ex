@@ -4,7 +4,7 @@
 
 defmodule RyushDiscord.GuildFlow.FlowRestart do
   @moduledoc """
-  Restart the flows using the `RyushDiscord.GuildFlow.FlowBehaviour.on_restart/0` behaviour function
+  Restart the flows using the `c:RyushDiscord.GuildFlow.FlowBehaviour.on_restart/0` behaviour function
   """
 
   alias RyushDiscord.GuildFlow

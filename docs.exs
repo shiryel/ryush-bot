@@ -34,7 +34,6 @@ alias RyushDiscord.{Guild, GuildTalk, GuildFlow, GuildEmojer}
       Guild.Permissions,
       Guild.ServerProcess,
       GuildTalk,
-      GuildTalk.E621,
       GuildTalk.TalkBehaviour,
       GuildTalk.TalkServer,
       GuildFlow,

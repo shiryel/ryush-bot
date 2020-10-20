@@ -6,7 +6,7 @@ defmodule RyushDiscord.Guild do
   @moduledoc """
   Process messages that occur on a Guild
 
-  If necessary, will use the `RyushDiscord.Guild.Talk` module to create a talk on a specifc channel with only one or multiple users
+  The process keep open forever
 
   ## Processes
   - `RyushDiscord.Guild.GuildRegistry` registry the servers that are open

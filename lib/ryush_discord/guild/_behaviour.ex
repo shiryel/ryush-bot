@@ -6,7 +6,7 @@ defmodule RyushDiscord.Guild.GuildBehaviour do
   @moduledoc """
   Defines a more intuitive way to work with the Guild server flow
 
-  The `paw/5` and `paw/6` macros creates a `paw_run/4` that altomaticaly handles the return of the macros and defines the next flow, either calling another `paw_run/4` or returning the final result when receiving a `{:end, GuildServer.t()}`
+  The `paw/5` and `paw/6` macros creates a `paw_run/4` that altomaticaly handles the return of the macros and defines the next flow, either calling another `paw_run/4` or returning the final result when receiving a `{:end, t:RyushDiscord.Guild.GuildServer.t()}`
   """
 
   alias RyushDiscord.Guild
