@@ -6,7 +6,9 @@ config :ryush,
       raise("""
       environment variable BOT_TOKEN is missing
       """),
-  bot_user_id: System.get_env("BOT_USER_ID") || "758235547151237132"
+  bot_user_id:
+    System.get_env("BOT_CLIENT_ID") ||
+      raise("environment variable BOT_CLIENT_ID is missing")
 
 # Configure your database
 config :ryush, Ryush.Repo,
@@ -63,7 +65,7 @@ alias GatewayBot.MessageWorkflow
 alias RyushDiscord.{Guild, GuildTalk}
 alias Guild.{GuildServer, Permissions}
 
-disable_debug = [Guild.ServerProcess, GuildTalk, GatewayBot, ApiBot, GuildServer, Permissions, MessageWorkflow, RyushExternal.E621]
+disable_debug = []
 
 Enum.each(disable_debug, &Logger.put_module_level(&1, :info))
 

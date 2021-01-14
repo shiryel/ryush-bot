@@ -162,6 +162,7 @@ defmodule RyushDiscord.Guild.ServerProcess do
           {:end, new_state}
 
         {:error, _} ->
+          Logger.debug("Dont have the permission")
           {:end, state}
       end
     else

@@ -32,27 +32,28 @@ defmodule RyushDiscord.Guild.Permissions do
   """
   @spec get(Guild.t(), GuildServer.t()) :: {Guild.t(), GuildServer.t()}
   def get(%{user_role_ids: user_role_ids} = msg, %{roles: guild_roles} = state) do
-    if ids_are_updated?(user_role_ids, guild_roles) do
-      msg = %{msg | permissions: fetch_permissions(msg, state)}
-      {msg, state}
-    else
-      new_roles =
-        case Connection.get_guild_roles(msg) do
-          {:ok, new_roles} ->
-            Logger.debug(inspect(new_roles, pretty: true))
-            new_roles
+    msg =
+      if ids_are_updated?(user_role_ids, guild_roles) do
+        %{msg | permissions: fetch_permissions(msg, state)}
+      else
+        new_roles =
+          case Connection.get_guild_roles(msg) do
+            {:ok, new_roles} ->
+              Logger.debug(inspect(new_roles, pretty: true))
+              new_roles
 
-          {:error, _} ->
-            guild_roles
-        end
+            {:error, _} ->
+              Logger.debug("Cant get the role...")
+              guild_roles
+          end
 
-      state = %{state | roles: new_roles}
-      msg = %{msg | permissions: fetch_permissions(msg, state)}
+        state = %{state | roles: new_roles}
+        %{msg | permissions: fetch_permissions(msg, state)}
+      end
 
-      Logger.debug(inspect(msg.permissions, pretty: true))
+    Logger.debug(inspect(msg.permissions, pretty: true))
 
-      {msg, state}
-    end
+    {msg, state}
   end
 
   defp ids_are_updated?(user_role_ids, guild_roles) do
@@ -61,7 +62,10 @@ defmodule RyushDiscord.Guild.Permissions do
     Enum.all?(user_role_ids, fn x -> x in guild_role_ids end)
   end
 
-  defp fetch_permissions(%{user_role_ids: user_role_ids, user_id: user_id}, %{roles: guild_roles, owner_id: owner_id}) do
+  defp fetch_permissions(%{user_role_ids: user_role_ids, user_id: user_id}, %{
+         roles: guild_roles,
+         owner_id: owner_id
+       }) do
     Enum.reduce(user_role_ids, __struct__(), fn user_role_id, acc ->
       guild_role = Enum.find(guild_roles, fn %{"id" => guild_id} -> guild_id == user_role_id end)
       permission = guild_role["permissions"]
@@ -70,9 +74,9 @@ defmodule RyushDiscord.Guild.Permissions do
         acc
         | roles: [{guild_role["id"], guild_role["name"]} | acc.roles],
           owner?: user_id == owner_id,
-          administrator?: acc.administrator? || ((permission &&& 0x00000008) > 0),
-          manage_channels?: acc.manage_channels? || ((permission &&& 0x00000010) > 0),
-          manage_guild?: acc.manage_guild? || ((permission &&& 0x00000020) > 0)
+          administrator?: acc.administrator? || (permission &&& 0x00000008) > 0,
+          manage_channels?: acc.manage_channels? || (permission &&& 0x00000010) > 0,
+          manage_guild?: acc.manage_guild? || (permission &&& 0x00000020) > 0
       }
     end)
   end
