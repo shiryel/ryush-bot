@@ -11,6 +11,11 @@ defmodule Ryush.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      releases: [
+        core: [
+          steps: [:assemble]
+        ]
+      ],
       docs: fn ->
         {result, _} = Code.eval_file("docs.exs")
         result
