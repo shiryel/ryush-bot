@@ -10,6 +10,9 @@ import Config
 config :ryush,
   ecto_repos: [Ryush.Repo]
 
+config :mnesia,
+  dir: 'mnesia_db'
+
 # Configures the endpoint
 config :ryush, RyushWeb.Endpoint,
   url: [host: "localhost"],
